@@ -1,0 +1,41 @@
+{
+    "name": "Arena 讨论平台",
+    "owner": {
+        "id": "owner",
+        "name": "用户",
+        "aliases": ["用户", "主人"],
+        "telegramUserId": "YOUR_TELEGRAM_USER_ID"
+    },
+    "herald": {
+        "id": "herald",
+        "name": "主持人",
+        "botToken": "YOUR_HERALD_BOT_TOKEN",
+        "botUserId": "YOUR_HERALD_BOT_USER_ID"
+    },
+    "telegram": {
+        "groupId": "YOUR_TELEGRAM_GROUP_ID",
+        "groupName": "Arena 讨论群"
+    },
+    "proxy": "http://127.0.0.1:10020",
+    "sync": {
+        "enabled": true,
+        "intervalSeconds": 30,
+        "groupChat": {
+            "enabled": true,
+            "maxMessages": 30,
+            "file": "GROUP_CHAT_LOG.md"
+        },
+        "whisper": {
+            "enabled": true,
+            "file": "WHISPERS.md"
+        }
+    },
+    "participants": [
+        {
+            "id": "expert1",
+            "name": "专家1",
+            "botToken": "YOUR_EXPERT1_BOT_TOKEN",
+            "botUserId": "YOUR_EXPERT1_BOT_USER_ID"
+        }
+    ]
+}

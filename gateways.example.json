@@ -1,0 +1,33 @@
+[
+  {
+    "id": "herald",
+    "name": "主持人",
+    "emoji": "🦉",
+    "port": 60008,
+    "config_file": "gateways/herald/openclaw.json",
+    "workspace_dir": "gateways/herald/state/workspace",
+    "state_dir": "gateways/herald/state",
+    "editable_files": [
+      "gateways/herald/openclaw.json"
+    ],
+    "role": "herald"
+  },
+  {
+    "id": "expert1",
+    "name": "专家1",
+    "emoji": "🪭",
+    "port": 61002,
+    "config_file": "gateways/expert1/openclaw.json",
+    "workspace_dir": "gateways/expert1/state/workspace",
+    "state_dir": "gateways/expert1/state",
+    "editable_files": [
+      "gateways/expert1/state/workspace/SOUL.md",
+      "gateways/expert1/state/workspace/IDENTITY.md",
+      "gateways/expert1/state/workspace/MEMORY.md",
+      "gateways/expert1/state/workspace/AGENTS.md",
+      "gateways/expert1/state/workspace/HEARTBEAT.md",
+      "gateways/expert1/openclaw.json"
+    ],
+    "role": ""
+  }
+]

@@ -1,0 +1,157 @@
+{
+    "meta": {
+        "lastTouchedVersion": "2026.2.13"
+    },
+    "auth": {
+        "profiles": {
+            "minimax:default": {
+                "provider": "minimax",
+                "mode": "api_key"
+            },
+            "anthropic:default": {
+                "provider": "anthropic",
+                "mode": "api_key"
+            },
+            "kimi-coding:default": {
+                "provider": "kimi-coding",
+                "mode": "api_key"
+            },
+            "openai:default": {
+                "provider": "openai",
+                "mode": "api_key"
+            },
+            "google:default": {
+                "provider": "google",
+                "mode": "api_key"
+            }
+        }
+    },
+    "models": {
+        "mode": "merge",
+        "providers": {
+            "minimax": {
+                "baseUrl": "https://api.minimax.io/anthropic",
+                "api": "anthropic-messages",
+                "models": [
+                    {
+                        "id": "MiniMax-M2.5",
+                        "name": "MiniMax M2.5",
+                        "reasoning": true,
+                        "input": [
+                            "text"
+                        ],
+                        "cost": {
+                            "input": 0.3,
+                            "output": 1.1,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 200000,
+                        "maxTokens": 8192
+                    }
+                ]
+            }
+        }
+    },
+    "agents": {
+        "defaults": {
+            "model": {
+                "primary": "kimi-coding/k2p5",
+                "fallbacks": [
+                    "minimax/MiniMax-M2.5",
+                    "anthropic/claude-opus-4-6",
+                    "openai/gpt-5.2",
+                    "google/gemini-2.5-flash"
+                ]
+            },
+            "models": {
+                "minimax/MiniMax-M2.5": {
+                    "alias": "Minimax"
+                },
+                "anthropic/claude-opus-4-6": {},
+                "kimi-coding/k2p5": {
+                    "alias": "Kimi K2.5"
+                },
+                "openai/gpt-5.2": {
+                    "alias": "GPT-5.2"
+                },
+                "google/gemini-2.5-flash": {
+                    "alias": "Gemini 2.5 Flash"
+                }
+            },
+            "workspace": "__WORKSPACE_PATH__",
+            "compaction": {
+                "mode": "safeguard"
+            },
+            "maxConcurrent": 4,
+            "subagents": {
+                "maxConcurrent": 8
+            },
+            "heartbeat": {
+                "every": "5m",
+                "target": "telegram",
+                "prompt": "读取 HEARTBEAT.md 并按步骤执行。先读 GROUP_CHAT_LOG.md 了解群组讨论近况，再读 SOUL.md 回顾你的身份和立场。然后在 thinking 中用中文想清楚：讨论进展到哪了？其他专家说了什么？我该如何回应或补充？想好之后直接输出你的发言内容。每次心跳都应该有所回应，HEARTBEAT_OK 意味着放弃发言权，除非确实无新消息，否则不要用。",
+                "activeHours": {
+                    "start": "00:00",
+                    "end": "23:59",
+                    "timezone": "Asia/Shanghai"
+                }
+            }
+        }
+    },
+    "channels": {
+        "telegram": {
+            "enabled": true,
+            "botToken": "__BOT_TOKEN__",
+            "dmPolicy": "pairing",
+            "groupPolicy": "open",
+            "streamMode": "partial"
+        }
+    },
+    "messages": {
+        "ackReactionScope": "group-mentions"
+    },
+    "commands": {
+        "native": "auto",
+        "nativeSkills": "auto"
+    },
+    "hooks": {
+        "internal": {
+            "enabled": true,
+            "entries": {
+                "boot-md": {
+                    "enabled": true
+                },
+                "bootstrap-extra-files": {
+                    "enabled": true
+                },
+                "command-logger": {
+                    "enabled": true
+                },
+                "session-memory": {
+                    "enabled": true
+                }
+            }
+        }
+    },
+    "gateway": {
+        "port": 60000,
+        "mode": "local",
+        "bind": "loopback",
+        "auth": {
+            "mode": "token",
+            "token": "__GATEWAY_TOKEN__"
+        },
+        "tailscale": {
+            "mode": "off",
+            "resetOnExit": false
+        }
+    },
+    "plugins": {
+        "entries": {
+            "telegram": {
+                "enabled": true
+            }
+        }
+    }
+}

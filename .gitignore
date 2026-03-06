@@ -1,0 +1,51 @@
+# ── Gateway instances (only _template is tracked) ─────────
+gateways/*/
+!gateways/_template/
+!gateways/_template/**
+
+# ── Secrets & credentials ─────────────────────────────────
+palace.json
+llm_profiles.json
+
+# ── Persona generation meta-prompts (private recipe) ──────
+backend/persona_prompts.py
+
+# ── Runtime data ──────────────────────────────────────────
+gateways.json
+backend/eunuch_pool.jsonl
+backend/game_state.json
+backend/herald_status.json
+backend/last_summary.md
+WHISPERS.md
+
+# ── User-generated content (runtime) ─────────────────────
+arena_templates.json
+materials/
+materials_index.json
+personas/
+personas_index.json
+backend/secretary_history/
+
+# ── Python cache / venv ───────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+backend/venv/
+
+# ── Node ──────────────────────────────────────────────────
+node_modules/
+
+# ── Debug / inspection scripts ────────────────────────────
+backend/tools/check_*.py
+backend/tools/inspect_*.py
+backend/tools/trigger_heartbeat.py
+backend/tools/game_recap.py
+backend/tools/simulate_*.py
+
+# ── Misc ──────────────────────────────────────────────────
+*.txt
+!requirements.txt
+*.log
+backups/
+shared/
