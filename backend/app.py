@@ -1432,33 +1432,83 @@ def _get_openclaw_supported_models(force: bool = False) -> set:
         # Parse JSON output — expected: array of model objects or similar
         raw = (r.stdout or "").strip()
         models_set = set()
-        try:
-            data = json.loads(raw)
+
+        def _clean(s: str) -> str:
+            return s.strip().strip('"').strip("'").rstrip(",").strip()
+
+        def _add(prov: str, mid: str):
+            prov, mid = _clean(prov), _clean(mid)
+            if prov and mid:
+                models_set.add(f"{prov}/{mid}".lower())
+            elif mid and "/" in mid:
+                models_set.add(mid.lower())
+
+        def _extract_list(prov: str, items):
+            for m in items:
+                if isinstance(m, str):
+                    _add(prov, m)
+                elif isinstance(m, dict):
+                    _add(prov, m.get("id") or m.get("model") or m.get("name") or "")
+
+        # Try to locate first JSON object/array (skip non-JSON preamble)
+        json_data = None
+        for ch in ("{", "["):
+            idx = raw.find(ch)
+            if idx >= 0:
+                try:
+                    json_data = json.loads(raw[idx:])
+                    break
+                except json.JSONDecodeError:
+                    continue
+
+        if json_data is not None:
+            data = json_data
             if isinstance(data, list):
                 for entry in data:
                     if isinstance(entry, str):
-                        models_set.add(entry.lower())
+                        clean = _clean(entry)
+                        if "/" in clean:
+                            models_set.add(clean.lower())
+                        elif clean:
+                            models_set.add(f"unknown/{clean}".lower())
                     elif isinstance(entry, dict):
-                        mid = entry.get("id") or entry.get("model") or ""
-                        prov = entry.get("provider") or ""
-                        if mid and prov:
-                            models_set.add(f"{prov}/{mid}".lower())
-                        elif mid and "/" in mid:
-                            models_set.add(mid.lower())
+                        mid = entry.get("id") or entry.get("model") or entry.get("name") or ""
+                        prov = entry.get("provider") or entry.get("KEY") or entry.get("key") or ""
+                        mlist = entry.get("models") or entry.get("items") or []
+                        if mlist and prov:
+                            _extract_list(_clean(prov), mlist)
+                        elif mid and prov:
+                            _add(prov, mid)
+                        elif mid:
+                            clean = _clean(mid)
+                            if "/" in clean:
+                                models_set.add(clean.lower())
             elif isinstance(data, dict):
-                # Could be {providers: {openai: {models: [...]}}} format
                 for prov_id, prov_data in data.items():
-                    if isinstance(prov_data, dict):
-                        for m in prov_data.get("models", []):
-                            mid = m.get("id", "") if isinstance(m, dict) else str(m)
+                    prov_id = _clean(prov_id)
+                    if isinstance(prov_data, list):
+                        # {"PROVIDER": ["model1", "model2", ...]}
+                        _extract_list(prov_id, prov_data)
+                    elif isinstance(prov_data, dict):
+                        mlist = prov_data.get("models") or prov_data.get("items") or []
+                        if mlist:
+                            _extract_list(prov_id, mlist)
+                        else:
+                            mid = prov_data.get("id") or prov_data.get("model") or ""
                             if mid:
-                                models_set.add(f"{prov_id}/{mid}".lower())
-        except json.JSONDecodeError:
+                                _add(prov_id, mid)
+                    elif isinstance(prov_data, str):
+                        if "/" in prov_id:
+                            models_set.add(prov_id.lower())
+        else:
             # Fallback: parse plain text (one model per line)
             for line in raw.splitlines():
                 line = line.strip()
-                if "/" in line and not line.startswith("#") and not line.startswith("{"):
-                    models_set.add(line.lower())
+                if not line or line.startswith("#"):
+                    continue
+                clean = _clean(line)
+                if "/" in clean and not clean.startswith("{") and not clean.startswith("["):
+                    models_set.add(clean.lower())
 
         if models_set:
             _openclaw_models_cache["models"] = models_set
