@@ -15,6 +15,8 @@ import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
 
+from proxy_config import get_proxy, make_urllib_opener
+
 HUB_DIR = Path(__file__).resolve().parent.parent
 
 COMPACT_THRESHOLD_BYTES = 100 * 1024  # 100 KB
@@ -24,51 +26,83 @@ CARRY_OVER_LINES = 10  # 保留最后 N 行到新 session
 
 # ── LLM 摘要调用 ──────────────────────────────────────────────
 
-def _call_anthropic(api_key: str, user_prompt: str, proxy: str = None) -> str:
-    """调用 Anthropic Messages API 生成摘要（使用最便宜的 haiku 模型）。"""
-    url = "https://api.anthropic.com/v1/messages"
-    payload = {
-        "model": "claude-haiku-4-5",
-        "max_tokens": 1024,
-        "messages": [{"role": "user", "content": user_prompt}],
-    }
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url, data=data,
-        headers={
-            "Content-Type": "application/json",
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-        }
-    )
-    if proxy:
-        opener = urllib.request.build_opener(
-            urllib.request.ProxyHandler({"http": proxy, "https": proxy})
-        )
-    else:
-        opener = urllib.request.build_opener()
+# Provider configs for summary LLM (cheapest models preferred)
+_SUMMARY_PROVIDERS = {
+    "minimax":     {"url": "https://api.minimax.io/v1/chat/completions",  "model": "MiniMax-M2.5-highspeed"},
+    "openai":      {"url": "https://api.openai.com/v1/chat/completions", "model": "gpt-4.1-mini"},
+    "kimi-coding": {"url": "https://api.kimi.com/coding/v1/chat/completions", "model": "k2p5"},
+    "google":      {"url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", "model": "gemini-2.5-flash"},
+}
 
-    with opener.open(req, timeout=60) as resp:
-        result = json.loads(resp.read().decode("utf-8"))
-    content = result.get("content", [])
-    for block in content:
-        if block.get("type") == "text":
-            return block["text"].strip()
-    return ""
+
+def _call_summary_llm(provider: str, api_key: str, user_prompt: str, proxy: str = None) -> str:
+    """调用 LLM 生成摘要，使用各 provider 最便宜的模型。"""
+    cfg = _SUMMARY_PROVIDERS.get(provider)
+    if not cfg:
+        return ""
+
+    opener = make_urllib_opener(proxy)
+
+    if provider == "google":
+        url = cfg["url"] + f"?key={api_key}"
+        payload = {
+            "contents": [{"parts": [{"text": user_prompt}]}],
+            "generationConfig": {"maxOutputTokens": 1024},
+        }
+        req = urllib.request.Request(
+            url, data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        with opener.open(req, timeout=60) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+        candidates = result.get("candidates", [])
+        if candidates:
+            parts = candidates[0].get("content", {}).get("parts", [])
+            if parts:
+                return parts[0].get("text", "").strip()
+        return ""
+    else:
+        # OpenAI-compatible (minimax, openai, kimi-coding)
+        payload = {
+            "model": cfg["model"],
+            "max_tokens": 1024,
+            "messages": [{"role": "user", "content": user_prompt}],
+        }
+        req = urllib.request.Request(
+            cfg["url"], data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            },
+        )
+        with opener.open(req, timeout=60) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+        choices = result.get("choices", [])
+        if choices:
+            return (choices[0].get("message", {}).get("content", "") or "").strip()
+        return ""
 
 
 def _get_summary_key(gw_dir: Path) -> tuple[str, str]:
     """
     从 auth-profiles.json 读取可用于摘要的 API key。
-    优先 anthropic（标准 API），返回 (provider, key)。
+    按 minimax → openai → kimi-coding → google 优先级查找。
+    返回 (provider, key)。
     """
+    priority = ["minimax", "openai", "kimi-coding", "google"]
     auth_path = gw_dir / "state" / "agents" / "main" / "agent" / "auth-profiles.json"
     try:
         data = json.loads(auth_path.read_text(encoding="utf-8"))
         profiles = data.get("profiles", {})
+        found = {}
         for profile_id, profile in profiles.items():
-            if profile.get("provider") == "anthropic":
-                return ("anthropic", profile.get("key", ""))
+            prov = profile.get("provider", "")
+            key = profile.get("key", "")
+            if prov and key and prov in _SUMMARY_PROVIDERS:
+                found[prov] = key
+        for prov in priority:
+            if prov in found:
+                return (prov, found[prov])
     except Exception:
         pass
     return ("", "")
@@ -278,7 +312,7 @@ def compact_gateway_sessions(gw_id: str, force: bool = False) -> dict:
         return {"error": "Sessions directory not found"}
 
     llm_provider, api_key = _get_summary_key(gw_dir)
-    proxy = "http://127.0.0.1:10020"
+    proxy = get_proxy()
 
     results = []
 
@@ -310,7 +344,7 @@ def compact_gateway_sessions(gw_id: str, force: bool = False) -> dict:
             try:
                 prompt_msgs = _build_summary_prompt(dialogue, gw_id)
                 user_prompt = prompt_msgs[0]["content"]
-                summary_bullets = _call_anthropic(api_key, user_prompt, proxy=proxy)
+                summary_bullets = _call_summary_llm(llm_provider, api_key, user_prompt, proxy=proxy)
             except Exception as e:
                 summary_bullets = ""
                 results.append({

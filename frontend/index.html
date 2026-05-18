@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>OpenClaw Hub Manager</title>
+<title>Agent Mesh</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet" />
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -18,34 +18,37 @@
 }
 
 :root {
-  --paper: #f8f2e7;
-  --paper-strong: #fffaf1;
-  --ink: #1e2426;
-  --ink-soft: #30383c;
-  --muted: #6a7b84;
-  --accent: #d1892d;
-  --accent-2: #1a8f7c;
-  --accent-3: #c6573d;
-  --border: #e3d5c2;
-  --panel: rgba(255, 253, 247, 0.92);
-  --panel-strong: #fffaf2;
-  --shadow: 0 18px 38px rgba(24, 28, 30, 0.12);
-  --log-bg: #0f1416;
+  --paper: #0b0f15;
+  --paper-strong: #0e1219;
+  --ink: #e2e8f0;
+  --ink-soft: #b0bcc8;
+  --muted: #5a6d7e;
+  --accent: #d84fa9;
+  --accent-2: #73fcd6;
+  --accent-3: #a855f7;
+  --border: rgba(115, 252, 214, 0.12);
+  --panel: rgba(14, 18, 25, 0.92);
+  --panel-strong: #111822;
+  --shadow: 0 18px 38px rgba(0, 0, 0, 0.4);
+  --log-bg: #080c11;
   --log-ink: #dbe5ea;
-  --log-muted: #8ea0a8;
-  --ok: #1f9d63;
-  --warn: #d28a1f;
-  --bad: #c74b3f;
-  --info: #1b6f86;
+  --log-muted: #5a7080;
+  --ok: #73fcd6;
+  --warn: #f0b429;
+  --bad: #f45b69;
+  --info: #73b8fc;
+  --glow-pink: rgba(216, 79, 169, 0.35);
+  --glow-cyan: rgba(115, 252, 214, 0.25);
 }
 
 body {
   font-family: "Space Grotesk", sans-serif;
   height: 100vh;
   color: var(--ink);
-  background: radial-gradient(circle at 12% 20%, rgba(209, 137, 45, 0.2), transparent 45%),
-    radial-gradient(circle at 85% 10%, rgba(26, 143, 124, 0.2), transparent 45%),
-    linear-gradient(140deg, #f8f2e7 0%, #eff3f4 48%, #f6efe1 100%);
+  background: radial-gradient(ellipse at 12% 20%, rgba(216, 79, 169, 0.15), transparent 50%),
+    radial-gradient(ellipse at 88% 8%, rgba(115, 252, 214, 0.12), transparent 50%),
+    radial-gradient(ellipse at 50% 90%, rgba(168, 85, 247, 0.08), transparent 55%),
+    linear-gradient(160deg, #080c12 0%, #0d1219 40%, #0f1520 100%);
   overflow: hidden;
 }
 
@@ -59,16 +62,16 @@ body::after {
 }
 
 body::before {
-  background: radial-gradient(circle at 10% 80%, rgba(197, 101, 61, 0.15), transparent 55%),
-    radial-gradient(circle at 90% 70%, rgba(26, 143, 124, 0.12), transparent 60%);
-  opacity: 0.8;
+  background: radial-gradient(circle at 10% 80%, rgba(216, 79, 169, 0.08), transparent 55%),
+    radial-gradient(circle at 90% 70%, rgba(115, 252, 214, 0.06), transparent 60%);
+  opacity: 0.9;
 }
 
 body::after {
-  background-image: linear-gradient(120deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-    linear-gradient(200deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-image: linear-gradient(120deg, rgba(115, 252, 214, 0.02) 1px, transparent 1px),
+    linear-gradient(200deg, rgba(216, 79, 169, 0.015) 1px, transparent 1px);
   background-size: 120px 120px, 160px 160px;
-  opacity: 0.35;
+  opacity: 0.5;
 }
 
 #root {
@@ -88,10 +91,10 @@ body::after {
   align-items: center;
   gap: 18px;
   padding: 16px 26px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 8px 24px rgba(17, 20, 22, 0.08);
-  backdrop-filter: blur(12px);
+  background: rgba(11, 15, 21, 0.88);
+  border-bottom: 1px solid rgba(115, 252, 214, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(216, 79, 169, 0.08);
+  backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -111,15 +114,23 @@ body::after {
   place-items: center;
   color: #fff;
   font-weight: 700;
-  font-size: 16px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+  font-family: "Orbitron", sans-serif;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, #d84fa9, #73fcd6);
+  box-shadow: 0 0 20px rgba(216, 79, 169, 0.3), 0 0 40px rgba(115, 252, 214, 0.15);
+  position: relative;
 }
 
 .header-title {
   font-size: 18px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.06em;
+  font-family: "Orbitron", sans-serif;
+  background: linear-gradient(135deg, #d84fa9, #73fcd6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .header-sub {
@@ -142,13 +153,14 @@ body::after {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(209, 137, 45, 0.12);
+  background: rgba(115, 252, 214, 0.08);
+  border: 1px solid rgba(115, 252, 214, 0.15);
   color: var(--ink-soft);
 }
 
 .meta-pill strong {
   font-weight: 700;
-  color: var(--ink);
+  color: var(--accent-2);
 }
 
 .header-actions {
@@ -171,40 +183,49 @@ body::after {
   align-items: center;
   gap: 6px;
   color: var(--ink);
-  background: #fff;
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(115, 252, 214, 0.15);
 }
 
 .btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 16px rgba(19, 25, 28, 0.08);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  border-color: rgba(115, 252, 214, 0.3);
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: linear-gradient(135deg, #d84fa9, #a855f7);
   color: #fff;
   border-color: transparent;
+  box-shadow: 0 0 16px rgba(216, 79, 169, 0.25);
 }
 
 .btn-primary:hover {
-  background: #dd9b35;
+  background: linear-gradient(135deg, #e060b8, #b76af8);
+  box-shadow: 0 0 24px rgba(216, 79, 169, 0.4);
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--ink-soft);
+  border-color: transparent;
+}
+
+.btn-ghost:hover {
+  background: rgba(115, 252, 214, 0.06);
+  border-color: rgba(115, 252, 214, 0.15);
 }
 
 .btn-warn {
-  background: #f2e3cd;
-  color: #9b5c12;
-  border-color: #eed4b0;
+  background: rgba(240, 180, 41, 0.12);
+  color: #f0b429;
+  border-color: rgba(240, 180, 41, 0.25);
 }
 
 .btn-danger {
-  background: #f6d3cf;
-  color: #a73a30;
-  border-color: #f2b8b2;
+  background: rgba(244, 91, 105, 0.12);
+  color: #f45b69;
+  border-color: rgba(244, 91, 105, 0.25);
 }
 
 .btn:disabled {
@@ -225,22 +246,23 @@ body::after {
 
 .sidebar {
   width: 280px;
-  background: var(--panel);
-  border: 1px solid var(--border);
+  background: rgba(14, 18, 25, 0.92);
+  border: 1px solid rgba(115, 252, 214, 0.08);
   border-radius: 18px;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   min-height: 0;
+  backdrop-filter: blur(12px);
 }
 
 .sidebar-head {
   padding: 16px 18px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(115, 252, 214, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--panel-strong);
+  background: rgba(17, 24, 34, 0.8);
 }
 
 .sidebar-title {
@@ -254,6 +276,7 @@ body::after {
   font-size: 12px;
   font-weight: 700;
   color: var(--accent-2);
+  text-shadow: 0 0 10px rgba(115, 252, 214, 0.4);
 }
 
 .sidebar-list {
@@ -268,7 +291,7 @@ body::after {
   padding: 10px 12px;
   border-radius: 14px;
   border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.03);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -277,14 +300,15 @@ body::after {
 }
 
 .side-item:hover {
-  border-color: var(--accent);
-  box-shadow: 0 10px 20px rgba(209, 137, 45, 0.12);
+  border-color: rgba(115, 252, 214, 0.2);
+  background: rgba(115, 252, 214, 0.04);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .side-item.active {
-  border-color: var(--accent);
-  background: #fff;
-  box-shadow: 0 12px 24px rgba(209, 137, 45, 0.2);
+  border-color: rgba(216, 79, 169, 0.4);
+  background: rgba(216, 79, 169, 0.08);
+  box-shadow: 0 0 20px rgba(216, 79, 169, 0.12), 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .side-emoji {
@@ -321,7 +345,7 @@ body::after {
 
 .status-dot.running {
   background: var(--ok);
-  box-shadow: 0 0 10px rgba(31, 157, 99, 0.4);
+  box-shadow: 0 0 10px rgba(115, 252, 214, 0.5);
 }
 
 .status-dot.starting {
@@ -339,13 +363,15 @@ body::after {
 
 .content {
   flex: 1;
-  background: var(--panel);
-  border: 1px solid var(--border);
+  background: rgba(14, 18, 25, 0.92);
+  border: 1px solid rgba(115, 252, 214, 0.08);
   border-radius: 20px;
   box-shadow: var(--shadow);
   padding: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
+  backdrop-filter: blur(12px);
 }
 
 .section-title {
@@ -381,11 +407,11 @@ body::after {
 }
 
 .stat-card {
-  background: var(--panel-strong);
-  border: 1px solid var(--border);
+  background: rgba(17, 24, 34, 0.7);
+  border: 1px solid rgba(115, 252, 214, 0.1);
   border-radius: 10px;
   padding: 8px 10px;
-  box-shadow: 0 4px 12px rgba(24, 28, 30, 0.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   animation: rise 0.4s ease both;
 }
 
@@ -410,8 +436,8 @@ body::after {
 }
 
 .gateway-card {
-  background: var(--panel-strong);
-  border: 1px solid var(--border);
+  background: rgba(17, 24, 34, 0.7);
+  border: 1px solid rgba(115, 252, 214, 0.1);
   border-radius: 18px;
   padding: 16px;
   cursor: pointer;
@@ -421,7 +447,8 @@ body::after {
 
 .gateway-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 14px 32px rgba(20, 25, 28, 0.14);
+  border-color: rgba(216, 79, 169, 0.3);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(216, 79, 169, 0.08);
 }
 
 .gateway-card-head {
@@ -449,21 +476,24 @@ body::after {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(31, 157, 99, 0.12);
-  color: var(--ink-soft);
+  background: rgba(115, 252, 214, 0.1);
+  color: var(--accent-2);
 }
 
 .status-badge.starting {
-  background: rgba(210, 138, 31, 0.18);
+  background: rgba(240, 180, 41, 0.15);
+  color: #f0b429;
 }
 
 .status-badge.error {
-  background: rgba(199, 75, 63, 0.15);
+  background: rgba(244, 91, 105, 0.15);
+  color: #f45b69;
 }
 
 .status-badge.stopped,
 .status-badge.unknown {
-  background: rgba(120, 130, 136, 0.16);
+  background: rgba(90, 109, 126, 0.15);
+  color: var(--muted);
 }
 
 .gateway-meta {
@@ -508,7 +538,8 @@ body::after {
   right: 0;
   bottom: -1px;
   height: 2px;
-  background: var(--accent);
+  background: linear-gradient(90deg, #d84fa9, #73fcd6);
+  box-shadow: 0 0 8px rgba(216, 79, 169, 0.4);
 }
 
 .info-grid {
@@ -518,8 +549,8 @@ body::after {
 }
 
 .info-card {
-  background: var(--panel-strong);
-  border: 1px solid var(--border);
+  background: rgba(17, 24, 34, 0.7);
+  border: 1px solid rgba(115, 252, 214, 0.1);
   border-radius: 14px;
   padding: 12px;
 }
@@ -541,17 +572,17 @@ body::after {
   margin-top: 16px;
   padding: 14px;
   border-radius: 16px;
-  border: 1px solid var(--border);
-  background: var(--panel-strong);
+  border: 1px solid rgba(115, 252, 214, 0.1);
+  background: rgba(17, 24, 34, 0.7);
   font-size: 12px;
   color: var(--ink-soft);
   line-height: 1.8;
 }
 
 .log-panel {
-  background: var(--log-bg);
+  background: #060a0f;
   border-radius: 16px;
-  border: 1px solid #1c2328;
+  border: 1px solid rgba(115, 252, 214, 0.08);
   overflow: hidden;
 }
 
@@ -560,7 +591,7 @@ body::after {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: #131a1e;
+  background: rgba(8, 12, 17, 0.9);
   color: var(--log-muted);
   font-size: 12px;
 }
@@ -612,8 +643,8 @@ body::after {
 
 .file-item:hover,
 .file-item.active {
-  border-color: var(--accent);
-  box-shadow: 0 10px 18px rgba(209, 137, 45, 0.12);
+  border-color: rgba(216, 79, 169, 0.35);
+  box-shadow: 0 10px 18px rgba(216, 79, 169, 0.1);
 }
 
 .file-item span {
@@ -630,7 +661,7 @@ body::after {
 .editor-panel {
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(115, 252, 214, 0.1);
   background: var(--panel-strong);
 }
 
@@ -639,8 +670,8 @@ body::after {
   display: flex;
   align-items: center;
   gap: 10px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.6);
+  border-bottom: 1px solid rgba(115, 252, 214, 0.08);
+  background: rgba(17, 24, 34, 0.8);
 }
 
 .editor-path {
@@ -661,7 +692,7 @@ textarea.editor {
   font-family: "JetBrains Mono", monospace;
   font-size: 12.5px;
   line-height: 1.7;
-  background: #fdfbf8;
+  background: #0a0e14;
   color: var(--ink);
   resize: vertical;
   outline: none;
@@ -670,7 +701,8 @@ textarea.editor {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 12, 13, 0.55);
+  background: rgba(5, 8, 12, 0.75);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -681,9 +713,9 @@ textarea.editor {
   width: 520px;
   max-width: 92vw;
   border-radius: 20px;
-  background: var(--panel-strong);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  background: #111822;
+  border: 1px solid rgba(216, 79, 169, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(216, 79, 169, 0.08);
   padding: 22px;
 }
 
@@ -710,11 +742,12 @@ textarea.editor {
 .select,
 .field textarea {
   width: 100%;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(115, 252, 214, 0.15);
   border-radius: 12px;
   padding: 9px 12px;
   font-size: 13px;
-  background: #fff;
+  background: rgba(8, 12, 18, 0.8);
+  color: var(--ink);
   font-family: inherit;
   outline: none;
 }
@@ -747,25 +780,29 @@ textarea.editor {
   border-radius: 12px;
   font-size: 13px;
   font-weight: 600;
-  background: #fff;
-  border: 1px solid var(--border);
-  box-shadow: 0 8px 18px rgba(18, 23, 25, 0.12);
+  background: rgba(17, 24, 34, 0.95);
+  border: 1px solid rgba(115, 252, 214, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   animation: slideIn 0.25s ease;
+  backdrop-filter: blur(12px);
+  color: var(--ink);
 }
 
 .toast.success {
-  border-color: rgba(31, 157, 99, 0.3);
-  color: #1a6c49;
+  border-color: rgba(115, 252, 214, 0.4);
+  color: #73fcd6;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 12px rgba(115, 252, 214, 0.1);
 }
 
 .toast.error {
-  border-color: rgba(199, 75, 63, 0.3);
-  color: #9b3b31;
+  border-color: rgba(244, 91, 105, 0.4);
+  color: #f45b69;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 12px rgba(244, 91, 105, 0.1);
 }
 
 .toast.info {
-  border-color: rgba(27, 111, 134, 0.3);
-  color: #1b5a70;
+  border-color: rgba(115, 184, 252, 0.3);
+  color: #73b8fc;
 }
 
 .empty-state {
@@ -871,7 +908,7 @@ textarea.editor {
 }
 
 .ledger-entry:hover {
-  background: rgba(209, 137, 45, 0.06);
+  background: rgba(115, 252, 214, 0.04);
 }
 
 .ledger-ts {
@@ -893,11 +930,11 @@ textarea.editor {
   text-align: center;
 }
 
-.ledger-badge.type-group { background: rgba(26, 143, 124, 0.15); color: #147a6a; }
-.ledger-badge.type-chat { background: rgba(27, 111, 134, 0.15); color: #1b5a70; }
-.ledger-badge.type-whisper { background: rgba(138, 79, 168, 0.18); color: #6d3a8a; }
-.ledger-badge.type-decree { background: rgba(209, 137, 45, 0.2); color: #9b5c12; }
-.ledger-badge.type-eunuch_log { background: rgba(199, 75, 63, 0.12); color: #a73a30; }
+.ledger-badge.type-group { background: rgba(115, 252, 214, 0.12); color: #73fcd6; }
+.ledger-badge.type-chat { background: rgba(115, 184, 252, 0.12); color: #73b8fc; }
+.ledger-badge.type-whisper { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+.ledger-badge.type-decree { background: rgba(216, 79, 169, 0.15); color: #d84fa9; }
+.ledger-badge.type-eunuch_log { background: rgba(244, 91, 105, 0.12); color: #f45b69; }
 
 .ledger-sender {
   flex-shrink: 0;
@@ -936,18 +973,36 @@ textarea.editor {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid var(--border);
-  background: #fff;
+  border: 1px solid rgba(115, 252, 214, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink-soft);
   transition: all 0.15s;
 }
 
 .type-filter.active {
-  border-color: var(--accent);
-  background: rgba(209, 137, 45, 0.1);
+  border-color: rgba(216, 79, 169, 0.4);
+  background: rgba(216, 79, 169, 0.1);
+  color: #d84fa9;
 }
 
 .type-filter:hover {
-  border-color: var(--accent);
+  border-color: rgba(216, 79, 169, 0.3);
+}
+
+/* Scrollbar — dark cyberpunk */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(115, 252, 214, 0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(115, 252, 214, 0.3); }
+
+/* Ensure all inputs/selects are readable on dark */
+select, input, textarea {
+  color: var(--ink);
+  background: rgba(8, 12, 18, 0.8);
+}
+select option {
+  background: #111822;
+  color: var(--ink);
 }
 </style>
 </head>
@@ -1023,13 +1078,40 @@ function StatusBadge({ status }) {
 }
 
 function Sidebar({ gateways, selectedId, onSelect }) {
+  const sectionLabel = (text) => (
+    <div style={{
+      fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase",
+      color: "var(--muted)", padding: "12px 12px 4px", display: "flex", alignItems: "center", gap: 8,
+    }}>
+      <span style={{ flex: 1, height: 1, background: "rgba(115,252,214,0.1)" }} />
+      <span>{text}</span>
+      <span style={{ flex: 1, height: 1, background: "rgba(115,252,214,0.1)" }} />
+    </div>
+  );
+
   return (
     <aside className="sidebar">
       <div className="sidebar-head">
-        <span className="sidebar-title">Gateways</span>
+        <span className="sidebar-title" style={{ fontFamily: "'Orbitron', sans-serif", letterSpacing: "0.15em", fontSize: 10 }}>Agent Mesh</span>
         <span className="sidebar-count">{gateways.filter(g => g.role !== "herald").length}</span>
       </div>
       <div className="sidebar-list">
+
+        {sectionLabel("WORLDWIDE")}
+
+        <div
+          className={`side-item ${selectedId === "koan" ? "active" : ""}`}
+          onClick={() => onSelect("koan")}
+        >
+          <span className="side-emoji">🪷</span>
+          <div className="side-info">
+            <div className="side-name" style={{ background: "linear-gradient(90deg, #d84fa9, #73fcd6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Koan Mesh</div>
+            <div className="side-sub">身份 · 频道 · 任务派发</div>
+          </div>
+        </div>
+
+        {sectionLabel("LOCAL")}
+
         <div
           className={`side-item ${selectedId === "overview" ? "active" : ""}`}
           onClick={() => onSelect("overview")}
@@ -1037,7 +1119,7 @@ function Sidebar({ gateways, selectedId, onSelect }) {
           <span className="side-emoji">🧭</span>
           <div className="side-info">
             <div className="side-name">总览</div>
-            <div className="side-sub">集群概览 / 全局操作</div>
+            <div className="side-sub">本地集群概览 · 操作面板</div>
           </div>
         </div>
         <div
@@ -1080,6 +1162,8 @@ function Sidebar({ gateways, selectedId, onSelect }) {
             <div className="side-sub">令牌 · 模型 · 分发</div>
           </div>
         </div>
+        {sectionLabel("GATEWAYS")}
+
         {gateways.filter((gw) => gw.role !== "herald").map((gw) => (
           <div
             key={gw.id}
@@ -1089,8 +1173,8 @@ function Sidebar({ gateways, selectedId, onSelect }) {
             <span className={`status-dot ${gw.status || "unknown"}`} />
             <span className="side-emoji">{gw.emoji}</span>
             <div className="side-info">
-              <div className="side-name">{gw.name}</div>
-              <div className="side-sub">{gw.id} · :{gw.port}</div>
+              <div className="side-name">{gw.id}</div>
+              <div className="side-sub">{gw.name} · :{gw.port}</div>
             </div>
           </div>
         ))}
@@ -1182,7 +1266,7 @@ function ModelStatsPanel() {
   );
 }
 
-function OverviewPanel({ gateways, onSelect, onRefresh }) {
+function OverviewPanel({ gateways, onSelect, onRefresh, onShowAdd, onStartAll, onStopAll }) {
   const running = gateways.filter((g) => g.status === "running").length;
   const starting = gateways.filter((g) => g.status === "starting").length;
   const stopped = gateways.length - running - starting;
@@ -1219,14 +1303,26 @@ function OverviewPanel({ gateways, onSelect, onRefresh }) {
 
   return (
     <div style={{ padding: "20px 24px" }}>
+      {/* Local action bar */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10, marginBottom: 16, padding: "10px 14px",
+        borderRadius: 14, background: "rgba(115,252,214,0.04)", border: "1px solid rgba(115,252,214,0.1)",
+      }}>
+        <button className="btn btn-primary" onClick={onShowAdd}>＋ 新增 Gateway</button>
+        <button className="btn btn-ghost" onClick={onStartAll}>▶ 全部启动</button>
+        <button className="btn btn-ghost" onClick={onStopAll}>⏹ 全部停止</button>
+        <button className="btn btn-ghost" onClick={onRefresh}>⟳ 刷新</button>
+        <div style={{ flex: 1 }} />
+        <button className="btn btn-warn" onClick={nukeAll} disabled={nuking} title="新建空白会话，清空记忆和内参">
+          {nuking ? "重置中…" : "🔄 重置心流"}
+        </button>
+      </div>
+
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 4 }}>
         <div>
-          <div className="section-title">Gateway 集群概览</div>
+          <div className="section-title">本地 Gateway 集群</div>
           <div className="section-sub">实时状态、端口占用与 Token 配置情况</div>
         </div>
-        <button className="btn btn-warn" onClick={nukeAll} disabled={nuking} title="新建空白会话，清空记忆和内参">
-          {nuking ? "重置中…" : "🔄 重置所有心流"}
-        </button>
       </div>
 
       <div className="stats-grid">
@@ -1255,9 +1351,9 @@ function OverviewPanel({ gateways, onSelect, onRefresh }) {
             <div className="gateway-card-head">
               <div>
                 <div className="gateway-name">
-                  {gw.emoji} {gw.name}
+                  {gw.emoji} {gw.id}
                 </div>
-                <div className="gateway-id">{gw.id} · :{gw.port}</div>
+                <div className="gateway-id">{gw.name} · :{gw.port}</div>
               </div>
               <StatusBadge status={gw.status} />
             </div>
@@ -1507,9 +1603,10 @@ function TokenModal({ gateway, onClose, onSaved }) {
 
 const KNOWN_MODELS = [
   { value: "kimi-coding/k2p5", label: "Kimi K2.5" },
-  { value: "anthropic/claude-opus-4-6", label: "Claude Opus 4.6" },
-  { value: "anthropic/claude-sonnet-4-5", label: "Claude Sonnet 4.5" },
   { value: "minimax/MiniMax-M2.5", label: "MiniMax M2.5" },
+  { value: "minimax/MiniMax-M2.7", label: "MiniMax M2.7" },
+  { value: "openai/gpt-5.2", label: "GPT-5.2" },
+  { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
 ];
 
 function AddGatewayModal({ onClose, onAdded, gateways }) {
@@ -2149,6 +2246,21 @@ function GatewayDetail({ gateway, onRefresh, onDelete }) {
   const [tab, setTab] = useState("overview");
   const [acting, setActing] = useState(false);
   const [showToken, setShowToken] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(gateway.name);
+
+  useEffect(() => { setNameInput(gateway.name); }, [gateway.name]);
+
+  const saveName = async () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed || trimmed === gateway.name) { setEditingName(false); return; }
+    try {
+      await api("PATCH", `/api/gateways/${gateway.id}`, { name: trimmed });
+      toast(`昵称已更新为「${trimmed}」`, "success");
+      onRefresh();
+    } catch (e) { toast(e.message, "error"); }
+    setEditingName(false);
+  };
 
   const action = async (verb) => {
     setActing(true);
@@ -2221,8 +2333,19 @@ function GatewayDetail({ gateway, onRefresh, onDelete }) {
       )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
-          <div className="section-title">{gateway.emoji} {gateway.name}</div>
-          <div className="section-sub">ID: {gateway.id} · Port: {gateway.port}</div>
+          <div className="section-title">{gateway.emoji} {gateway.id}</div>
+          <div className="section-sub" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {editingName ? (
+              <input value={nameInput} onChange={e => setNameInput(e.target.value)}
+                onBlur={saveName} onKeyDown={e => { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditingName(false); }}
+                autoFocus style={{ padding: "2px 6px", borderRadius: 4, border: "1px solid var(--accent)", fontSize: 12, background: "var(--paper-strong)", color: "var(--ink)", width: 140 }} />
+            ) : (
+              <span onClick={() => setEditingName(true)} style={{ cursor: "pointer", borderBottom: "1px dashed var(--muted)" }} title="点击修改昵称">
+                {gateway.name}
+              </span>
+            )}
+            <span>· Port: {gateway.port}</span>
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <StatusBadge status={gateway.status} />
@@ -2638,7 +2761,7 @@ function SecretaryPanel() {
             <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)}
               style={{
                 width: "100%", padding: "6px 8px", borderRadius: 6,
-                border: "1px solid var(--border)", fontSize: 12, background: "#fff",
+                border: "1px solid var(--border)", fontSize: 12, background: "rgba(17,24,34,0.7)",
               }}>
               {models.length === 0 && <option value="">加载中...</option>}
               {models.map(m => (
@@ -2662,7 +2785,7 @@ function SecretaryPanel() {
               placeholder="告诉书记你需要什么，例如：整理所有专家的核心观点，按主题分类"
               style={{
                 width: "100%", padding: "6px 8px", borderRadius: 6,
-                border: "1px solid var(--border)", fontSize: 12, background: "#fff",
+                border: "1px solid var(--border)", fontSize: 12, background: "rgba(17,24,34,0.7)",
               }}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && prompt.trim() && selectedModel && log) { e.preventDefault(); handleGenerate(); } }}
             />
@@ -2670,7 +2793,7 @@ function SecretaryPanel() {
               <div style={{
                 position: "absolute", top: "100%", left: 0, right: 0, zIndex: 10,
                 marginTop: 2, border: "1px solid var(--border)", borderRadius: 6,
-                background: "#fff", boxShadow: "0 4px 12px rgba(0,0,0,.12)",
+                background: "rgba(17,24,34,0.7)", boxShadow: "0 4px 12px rgba(0,0,0,.12)",
                 maxHeight: 160, overflowY: "auto",
               }}>
                 {promptHistory.map((h, i) => (
@@ -2722,7 +2845,7 @@ function SecretaryPanel() {
           </div>
           <div style={{
             flex: 1, minHeight: 0, overflowY: "auto",
-            background: "#fff", border: "1px solid var(--border)", borderRadius: 6,
+            background: "rgba(17,24,34,0.7)", border: "1px solid var(--border)", borderRadius: 6,
             padding: 12, fontSize: 13, lineHeight: 1.8, whiteSpace: "pre-wrap",
           }}>{result}</div>
         </div>
@@ -3539,7 +3662,7 @@ function ArenaPanel() {
   const inputStyle = { padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 13, background: "var(--paper-strong)", width: "100%" };
 
   return (
-    <div style={{ padding: "16px 24px", maxWidth: 1100, height: "100%", minHeight: 0, overflowY: arenaTab === "secretary" ? "hidden" : "auto", display: arenaTab === "secretary" ? "flex" : "block", flexDirection: "column" }}>
+    <div style={{ padding: "16px 24px", height: "100%", minHeight: 0, overflowY: arenaTab === "secretary" ? "hidden" : "auto", display: arenaTab === "secretary" ? "flex" : "block", flexDirection: "column" }}>
       {/* Header */}
       <div style={{ marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
@@ -3677,9 +3800,9 @@ function ArenaPanel() {
                     style={{ accentColor: "var(--accent)", width: 16, height: 16 }} />
                   <span style={{ fontSize: 18 }}>{gw.emoji || "🔷"}</span>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{gw.name}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{gw.id}</div>
                     <div style={{ fontSize: 10, color: noToken ? "var(--bad)" : isRunning ? "#2ecc71" : "var(--muted)" }}>
-                      {noToken ? "未配置 Token" : isRunning ? "● 运行中" : `port ${gw.port}`}
+                      {noToken ? "未配置 Token" : isRunning ? `${gw.name} · 运行中` : `${gw.name} · port ${gw.port}`}
                     </div>
                   </div>
                 </label>
@@ -3708,13 +3831,13 @@ function ArenaPanel() {
                   border: `1px solid ${focusMap[gw.id] ? "var(--accent)" : "var(--border)"}`,
                 }}>
                   <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{gw.emoji || "🔷"}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, minWidth: 50, whiteSpace: "nowrap" }}>{gw.name}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, minWidth: 50, whiteSpace: "nowrap" }}>{gw.id}</span>
                   <select
                     value={personaMap[gw.id] || ""}
                     onChange={e => setPersonaMap(prev => ({ ...prev, [gw.id]: e.target.value }))}
                     style={{
                       padding: "3px 6px", borderRadius: 6, fontSize: 11,
-                      border: "1px solid var(--border)", background: "#fff",
+                      border: "1px solid var(--border)", background: "rgba(17,24,34,0.7)",
                       minWidth: 80, maxWidth: 130, color: personaMap[gw.id] ? "var(--ink)" : "var(--muted)",
                     }}>
                     <option value="">身份卡…</option>
@@ -3729,7 +3852,7 @@ function ArenaPanel() {
                     style={{
                       flex: 1, padding: "4px 8px", borderRadius: 6,
                       border: "1px solid var(--border)", fontSize: 12,
-                      background: "#fff",
+                      background: "rgba(17,24,34,0.7)",
                     }}
                   />
                 </div>
@@ -4128,7 +4251,7 @@ function MaterialsPanel() {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {materials.filter(m => filterType === "all" || (m.type || "knowledge") === filterType).map(m => (
             <div key={m.id} style={{
-              background: "#fff", border: "1px solid var(--border)", borderRadius: 12,
+              background: "rgba(17,24,34,0.7)", border: "1px solid var(--border)", borderRadius: 12,
               padding: "12px 16px",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -4366,7 +4489,7 @@ function PersonaLibraryPanel({ gateways: allGateways }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
           {personas.map(p => (
             <div key={p.id} style={{
-              background: "#fff", border: "1px solid var(--border)", borderRadius: 12,
+              background: "rgba(17,24,34,0.7)", border: "1px solid var(--border)", borderRadius: 12,
               padding: "12px 16px",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -4411,7 +4534,7 @@ function PersonaLibraryPanel({ gateways: allGateways }) {
                     style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 12 }}>
                     <option value="">选择 Gateway...</option>
                     {gateways.map(gw => (
-                      <option key={gw.id} value={gw.id}>{gw.emoji || "🪭"} {gw.name} ({gw.id})</option>
+                      <option key={gw.id} value={gw.id}>{gw.emoji || "🪭"} {gw.id} ({gw.name})</option>
                     ))}
                   </select>
                   <button className="btn btn-primary" style={{ fontSize: 11, padding: "4px 12px" }}
@@ -4436,7 +4559,7 @@ function PersonaLibraryPanel({ gateways: allGateways }) {
                         borderRadius: "6px 6px 0 0",
                       }}>{fn}</div>
                       <pre style={{
-                        fontSize: 11, padding: 10, background: "#fafafa",
+                        fontSize: 11, padding: 10, background: "rgba(8,12,18,0.8)",
                         border: "1px solid var(--border)", borderRadius: "0 0 6px 6px",
                         maxHeight: 200, overflow: "auto", whiteSpace: "pre-wrap",
                         margin: 0,
@@ -4519,7 +4642,7 @@ function FuzzyModelPicker({ selected, onSelect, onProviderDetected }) {
     <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
       <div style={{
         display: "flex", flexWrap: "wrap", gap: 4, padding: "6px 10px", minHeight: 38,
-        border: "1px solid var(--border)", borderRadius: 8, background: "#fff",
+        border: "1px solid var(--border)", borderRadius: 8, background: "rgba(17,24,34,0.7)",
         cursor: "text", alignItems: "center",
       }} onClick={() => setOpen(true)}>
         {selected.map(s => (
@@ -4536,7 +4659,7 @@ function FuzzyModelPicker({ selected, onSelect, onProviderDetected }) {
         <input
           value={query} onChange={e => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
-          placeholder={selected.length ? "" : loading ? "加载 openclaw 模型列表..." : "搜索模型 (如 claude, gpt, gemini...)"}
+          placeholder={selected.length ? "" : loading ? "加载 openclaw 模型列表..." : "搜索模型 (如 minimax, gpt, gemini...)"}
           style={{
             border: "none", outline: "none", flex: 1, minWidth: 120,
             fontSize: 13, padding: "2px 0", background: "transparent",
@@ -4547,7 +4670,7 @@ function FuzzyModelPicker({ selected, onSelect, onProviderDetected }) {
         <div style={{
           position: "absolute", top: "100%", left: 0, right: 0, zIndex: 999,
           maxHeight: 320, overflowY: "auto", marginTop: 4,
-          background: "#fff", border: "1px solid var(--border)", borderRadius: 10,
+          background: "rgba(17,24,34,0.7)", border: "1px solid var(--border)", borderRadius: 10,
           boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
         }}>
           {Object.keys(grouped).length === 0 && (
@@ -4575,7 +4698,7 @@ function FuzzyModelPicker({ selected, onSelect, onProviderDetected }) {
                     <span style={{
                       width: 16, height: 16, borderRadius: 4, flexShrink: 0,
                       border: sel ? "none" : "1.5px solid var(--border)",
-                      background: sel ? "var(--ok)" : "#fff",
+                      background: sel ? "var(--ok)" : "rgba(17,24,34,0.7)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       color: "#fff", fontSize: 11, fontWeight: 700,
                     }}>{sel ? "✓" : ""}</span>
@@ -4777,7 +4900,7 @@ function LLMPanel({ gateways }) {
             return (
               <div key={u.provider_id} style={{
                 padding: "10px 14px", borderRadius: 10, marginBottom: 8,
-                background: "#fff", border: "1px solid var(--border)",
+                background: "rgba(17,24,34,0.7)", border: "1px solid var(--border)",
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                   <span style={{ fontWeight: 700, fontSize: 13 }}>{u.provider_label}</span>
@@ -4882,7 +5005,7 @@ function LLMPanel({ gateways }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {providers.map(p => (
             <div key={p.id} style={{
-              background: "#fff", border: "1px solid var(--border)", borderRadius: 14,
+              background: "rgba(17,24,34,0.7)", border: "1px solid var(--border)", borderRadius: 14,
               padding: "14px 18px", display: "flex", flexDirection: "column", gap: 10,
             }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -4956,12 +5079,12 @@ function LLMPanel({ gateways }) {
             const isAssigning = assigningModel === gw.id;
             return (
               <div key={gw.id} style={{
-                background: "#fff", border: "1px solid var(--border)", borderRadius: 12,
+                background: "rgba(17,24,34,0.7)", border: "1px solid var(--border)", borderRadius: 12,
                 padding: "12px 16px", display: "flex", alignItems: "center", gap: 12,
               }}>
                 <span style={{ fontSize: 18 }}>{gw.emoji}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{gw.name}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{gw.id} <span style={{ fontWeight: 400, fontSize: 12, color: "var(--muted)" }}>{gw.name}</span></div>
                   <div style={{ fontSize: 12, color: "var(--muted)", fontFamily: "JetBrains Mono" }}>
                     主模型: {mc.primary || "—"}
                   </div>
@@ -5086,27 +5209,786 @@ function ModelSelector({ gatewayId }) {
   );
 }
 
-const VIRTUAL_PAGE_IDS = new Set(["overview", "game", "llm", "materials", "personas"]);
+// ═══════════════════════════════════════════════════════════════
+// Koan Mesh Panel
+// ═══════════════════════════════════════════════════════════════
+
+function KoanMeshPanel({ gateways }) {
+  const [tab, setTab] = useState("units");
+  const [koanUnits, setKoanUnits] = useState([]);
+  const [koanAgents, setKoanAgents] = useState([]);
+  const [channels, setChannels] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState(null);
+  const [channelMessages, setChannelMessages] = useState([]);
+  const [channelDispatches, setChannelDispatches] = useState([]);
+  const [showCreateChannel, setShowCreateChannel] = useState(false);
+  const [showAddUnit, setShowAddUnit] = useState(null); // null | "local" | "manual"
+  const [manualKoanId, setManualKoanId] = useState("");
+  const [manualLabel, setManualLabel] = useState("");
+  const [selectedLocalGw, setSelectedLocalGw] = useState("");
+  const [unitStatus, setUnitStatus] = useState([]);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const loadUnits = useCallback(async () => {
+    try {
+      const data = await api("GET", "/api/koan/units");
+      setKoanUnits(data);
+    } catch (e) {
+      // Fallback: build units list from /api/koan/agents (old endpoint)
+      try {
+        const agents = await api("GET", "/api/koan/agents");
+        setKoanUnits((agents || []).map(a => ({
+          koanId: a.koanId, source: "local", gwId: a.gwId,
+          label: a.displayName || a.gwId, registeredAt: a.registeredAt,
+        })));
+      } catch (e2) { console.error(e2); }
+    }
+  }, []);
+
+  const loadKoanAgents = useCallback(async () => {
+    try {
+      const data = await api("GET", "/api/koan/agents");
+      setKoanAgents(data);
+    } catch (e) { console.error(e); }
+  }, []);
+
+  const loadChannels = useCallback(async () => {
+    try {
+      const first = koanAgents[0];
+      if (first) {
+        const data = await api("GET", `/api/koan/channels?gwId=${first.gwId}`);
+        setChannels(data.channels || []);
+      }
+    } catch (e) { console.error(e); }
+  }, [koanAgents]);
+
+  const loadStatus = useCallback(async () => {
+    setStatusLoading(true);
+    try {
+      const data = await api("GET", "/api/koan/units/status");
+      setUnitStatus(data);
+    } catch (e) { console.error(e); }
+    setStatusLoading(false);
+  }, []);
+
+  useEffect(() => { loadUnits(); loadKoanAgents(); }, [loadUnits, loadKoanAgents]);
+  useEffect(() => { if (tab === "channels") loadChannels(); }, [tab, loadChannels]);
+  useEffect(() => { if (tab === "activity") loadStatus(); }, [tab, loadStatus]);
+
+  const registerLocalAgent = async () => {
+    if (!selectedLocalGw) return toast("请选择一个 Gateway", "error");
+    const gw = gateways.find(g => g.id === selectedLocalGw);
+    setLoading(true);
+    try {
+      const result = await api("POST", `/api/koan/agents/${selectedLocalGw}/register`, { displayName: gw?.name || selectedLocalGw });
+      toast(`已注册: ${result.koanId}`, "success");
+      loadUnits(); loadKoanAgents();
+      setShowAddUnit(null); setSelectedLocalGw("");
+    } catch (e) { toast(e.message, "error"); }
+    setLoading(false);
+  };
+
+  const addManualUnit = async () => {
+    if (!manualKoanId.trim()) return toast("请输入 Koan ID", "error");
+    setLoading(true);
+    try {
+      await api("POST", "/api/koan/units/external", { koanId: manualKoanId.trim(), label: manualLabel.trim() });
+      toast(`已添加: ${manualKoanId.trim()}`, "success");
+      loadUnits();
+      setShowAddUnit(null); setManualKoanId(""); setManualLabel("");
+    } catch (e) { toast(e.message, "error"); }
+    setLoading(false);
+  };
+
+  const removeUnit = async (unit) => {
+    if (unit.source === "local") {
+      if (!confirm("永久删除此 Koan 身份？\n\n将同时注销远端 Koan 网络上的注册，此操作不可恢复。")) return;
+      try {
+        const res = await api("DELETE", `/api/koan/agents/${unit.gwId}/identity`);
+        if (res.remote_deregistered) toast("身份已永久删除（远端已注销）", "success");
+        else toast(`本地已删除，远端注销失败: ${res.remote_error || "未知原因"}`, "warn");
+      } catch (e) { toast(e.message, "error"); return; }
+    } else {
+      if (!confirm(`移除外部 Koan Unit「${unit.label}」？`)) return;
+      try {
+        await api("DELETE", `/api/koan/units/external/${encodeURIComponent(unit.koanId)}`);
+        toast("已移除", "info");
+      } catch (e) { toast(e.message, "error"); return; }
+    }
+    loadUnits(); loadKoanAgents();
+  };
+
+  const loadChannelDetail = async (channelId) => {
+    try {
+      const [detail, msgs, dispatches] = await Promise.all([
+        api("GET", `/api/koan/channels/${channelId}`),
+        api("GET", `/api/koan/channels/${channelId}/messages`),
+        api("GET", `/api/koan/channels/${channelId}/dispatches`),
+      ]);
+      setSelectedChannel(detail);
+      setChannelMessages(msgs.messages || []);
+      setChannelDispatches(dispatches.dispatches || []);
+    } catch (e) { toast(e.message, "error"); }
+  };
+
+  const tabStyle = (t) => ({
+    padding: "8px 20px",
+    cursor: "pointer",
+    color: tab === t ? "var(--ink)" : "var(--muted)",
+    fontWeight: tab === t ? 600 : 400,
+    fontSize: 14,
+    background: "transparent",
+    border: "none",
+    borderBottom: tab === t ? "2px solid var(--accent)" : "2px solid transparent",
+  });
+
+  // Gateways that don't have a koan identity yet (available for local registration)
+  const registeredGwIds = new Set(koanUnits.filter(u => u.source === "local").map(u => u.gwId));
+  const unregisteredGateways = gateways.filter(g => g.role !== "herald" && !registeredGwIds.has(g.id));
+
+  return (
+    <div className="panel" style={{ padding: 24 }}>
+      <h2 style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+        <span>🪷</span> Koan Mesh
+      </h2>
+
+      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--border)", marginBottom: 20 }}>
+        <button style={tabStyle("units")} onClick={() => setTab("units")}>Koan Unit</button>
+        <button style={tabStyle("channels")} onClick={() => setTab("channels")}>频道 / 团队</button>
+        <button style={tabStyle("activity")} onClick={() => setTab("activity")}>活动总览</button>
+      </div>
+
+      {/* ── Tab 1: Koan Units ── */}
+      {tab === "units" && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h3 style={{ margin: 0 }}>Koan Units <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 400 }}>({koanUnits.length})</span></h3>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn btn-primary" style={{ fontSize: 13 }}
+                onClick={() => setShowAddUnit(showAddUnit ? null : "choose")}>
+                ＋ 添加 Unit
+              </button>
+            </div>
+          </div>
+
+          {/* Add unit form */}
+          {showAddUnit && (
+            <div style={{ background: "rgba(115,252,214,0.04)", border: "1px solid var(--border)", borderRadius: 10, padding: 16, marginBottom: 20 }}>
+              {showAddUnit === "choose" && (
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button className="btn btn-primary" style={{ flex: 1, padding: "12px 16px", fontSize: 13 }}
+                    onClick={() => setShowAddUnit("local")} disabled={unregisteredGateways.length === 0}>
+                    🖥️ 添加本地 Agent
+                    <div style={{ fontSize: 11, fontWeight: 400, marginTop: 4, opacity: 0.8 }}>
+                      {unregisteredGateways.length > 0 ? `${unregisteredGateways.length} 个可用` : "所有 Gateway 已注册"}
+                    </div>
+                  </button>
+                  <button className="btn btn-ghost" style={{ flex: 1, padding: "12px 16px", fontSize: 13, border: "1px solid var(--border)" }}
+                    onClick={() => setShowAddUnit("manual")}>
+                    🌐 直接添加 Koan ID
+                    <div style={{ fontSize: 11, fontWeight: 400, marginTop: 4, opacity: 0.8 }}>手动输入外部 Agent 的 Koan ID</div>
+                  </button>
+                </div>
+              )}
+
+              {showAddUnit === "local" && (
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>🖥️ 选择本地 Gateway 注册到 Koan</div>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <select value={selectedLocalGw} onChange={e => setSelectedLocalGw(e.target.value)}
+                      style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 13, background: "var(--paper-strong)" }}>
+                      <option value="">选择 Gateway…</option>
+                      {unregisteredGateways.map(gw => (
+                        <option key={gw.id} value={gw.id}>{gw.emoji} {gw.id} ({gw.name})</option>
+                      ))}
+                    </select>
+                    <button className="btn btn-primary" disabled={loading || !selectedLocalGw} onClick={registerLocalAgent}>
+                      {loading ? "注册中..." : "注册"}
+                    </button>
+                    <button className="btn btn-ghost" onClick={() => setShowAddUnit(null)}>取消</button>
+                  </div>
+                </div>
+              )}
+
+              {showAddUnit === "manual" && (
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>🌐 手动添加外部 Koan ID</div>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <input value={manualKoanId} onChange={e => setManualKoanId(e.target.value)}
+                      placeholder="Koan ID，如 agent-abc123…"
+                      style={{ flex: 2, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 13, background: "var(--paper-strong)", fontFamily: "JetBrains Mono, monospace" }} />
+                    <input value={manualLabel} onChange={e => setManualLabel(e.target.value)}
+                      placeholder="备注标签（可选）"
+                      style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 13, background: "var(--paper-strong)" }} />
+                    <button className="btn btn-primary" disabled={loading || !manualKoanId.trim()} onClick={addManualUnit}>
+                      {loading ? "添加中..." : "添加"}
+                    </button>
+                    <button className="btn btn-ghost" onClick={() => setShowAddUnit(null)}>取消</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Unit list */}
+          {koanUnits.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "48px 24px", color: "var(--muted)" }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🪷</div>
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, color: "var(--ink)" }}>尚未添加任何 Koan Unit</div>
+              <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+                点击「＋ 添加 Unit」，可以注册本地 Agent 或手动输入外部 Koan ID。
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+              {koanUnits.map(unit => (
+                <div key={unit.koanId} style={{
+                  background: "rgba(17,24,34,0.7)", border: "1px solid var(--border)", borderRadius: 12,
+                  padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8,
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>
+                        {unit.source === "local" ? "🖥️" : "🌐"} {unit.label}
+                      </div>
+                      <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "var(--muted)", marginTop: 2, wordBreak: "break-all" }}>
+                        {unit.koanId}
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: 10, padding: "2px 8px", borderRadius: 10, fontWeight: 600, whiteSpace: "nowrap",
+                      background: unit.source === "local" ? "rgba(115,252,214,0.12)" : "rgba(216,79,169,0.12)",
+                      color: unit.source === "local" ? "var(--ok)" : "#d84fa9",
+                    }}>
+                      {unit.source === "local" ? "本地" : "外部"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, color: "var(--muted)" }}>
+                    <span>
+                      {unit.source === "local" && unit.gwId ? `Gateway: ${unit.gwId}` : ""}
+                      {unit.registeredAt ? ` · ${new Date(unit.registeredAt).toLocaleDateString()}` : ""}
+                      {unit.addedAt ? `添加于 ${new Date(unit.addedAt).toLocaleDateString()}` : ""}
+                    </span>
+                    <button className="btn btn-ghost" style={{ fontSize: 11, padding: "2px 8px", color: "var(--bad)" }}
+                      onClick={() => removeUnit(unit)}>
+                      移除
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* ── Tab 2: Channels ── */}
+      {tab === "channels" && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h3 style={{ margin: 0 }}>我的频道</h3>
+            <button className="btn btn-primary" style={{ fontSize: 13 }}
+              onClick={() => setShowCreateChannel(!showCreateChannel)}>
+              ＋ 创建频道
+            </button>
+          </div>
+
+          {showCreateChannel && <CreateChannelForm koanAgents={koanAgents} onCreated={() => { setShowCreateChannel(false); loadChannels(); }} />}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 20, marginTop: 12 }}>
+            {/* Channel list */}
+            <div>
+              {channels.length === 0 && <div style={{ color: "var(--muted)", fontSize: 13, padding: 12 }}>暂无频道</div>}
+              {channels.map(ch => (
+                <div key={ch.channelId}
+                  onClick={() => loadChannelDetail(ch.channelId)}
+                  style={{
+                    padding: "12px 14px", cursor: "pointer", borderRadius: 8,
+                    border: selectedChannel?.channelId === ch.channelId ? "1px solid var(--accent)" : "1px solid var(--border)",
+                    background: selectedChannel?.channelId === ch.channelId ? "rgba(209,137,45,0.08)" : "var(--panel)",
+                    marginBottom: 8,
+                  }}>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>#{ch.name}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
+                    {ch.memberCount || 0} 成员 · {ch.visibility}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Channel detail */}
+            <div>
+              {selectedChannel ? (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <h3 style={{ margin: 0 }}>#{selectedChannel.name}</h3>
+                    <button className="btn btn-ghost" style={{ fontSize: 12, padding: "4px 10px", color: "var(--bad)" }}
+                      onClick={async () => {
+                        if (!confirm(`确定删除频道 #${selectedChannel.name}？此操作不可撤销。`)) return;
+                        const ownerGw = koanAgents[0]?.gwId;
+                        if (!ownerGw) return toast("没有可用的 Koan Agent", "error");
+                        try {
+                          await api("DELETE", `/api/koan/channels/${selectedChannel.channelId}?gwId=${ownerGw}`);
+                          toast(`频道 #${selectedChannel.name} 已删除`, "info");
+                          setSelectedChannel(null);
+                          loadChannels();
+                        } catch (e) { toast(e.message, "error"); }
+                      }}>🗑 删除频道</button>
+                  </div>
+                  {selectedChannel.description && <p style={{ color: "var(--ink-soft)", fontSize: 13, marginBottom: 12 }}>{selectedChannel.description}</p>}
+
+                  <div style={{ marginBottom: 16 }}>
+                    <strong style={{ fontSize: 13 }}>成员 ({(selectedChannel.members || []).length})</strong>
+                    <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {(selectedChannel.members || []).map(m => (
+                        <span key={m.koanId} style={{
+                          padding: "4px 10px", borderRadius: 20, fontSize: 12,
+                          background: m.role === "owner" ? "rgba(209,137,45,0.15)" : "var(--panel)",
+                          border: "1px solid var(--border)",
+                        }}>
+                          {m.koanId} {m.role === "owner" && "👑"}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <InviteForm channelId={selectedChannel.channelId} koanAgents={koanAgents} koanUnits={koanUnits}
+                    existingMembers={selectedChannel.members || []}
+                    onInvited={() => loadChannelDetail(selectedChannel.channelId)} />
+
+                  <div style={{ marginTop: 20 }}>
+                    <strong style={{ fontSize: 13 }}>消息流</strong>
+                    <div style={{ marginTop: 8, maxHeight: 300, overflowY: "auto", background: "var(--log-bg)", borderRadius: 8, padding: 12 }}>
+                      {channelMessages.length === 0 && <div style={{ color: "var(--log-muted)", fontSize: 12 }}>暂无消息</div>}
+                      {channelMessages.map((msg, i) => (
+                        <div key={i} style={{ marginBottom: 10, fontSize: 12 }}>
+                          <span style={{ color: "var(--accent)", fontWeight: 600 }}>{msg.from}</span>
+                          <span style={{ color: "var(--log-muted)", marginLeft: 8 }}>{new Date(msg.createdAt).toLocaleString()}</span>
+                          <div style={{ color: "var(--log-ink)", marginTop: 4 }}>
+                            {msg.payload?.message || JSON.stringify(msg.payload)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: "var(--muted)", fontSize: 13, padding: 24, textAlign: "center" }}>
+                  ← 选择一个频道查看详情
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Tab 3: Activity Dashboard ── */}
+      {tab === "activity" && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h3 style={{ margin: 0 }}>活动总览</h3>
+            <button className="btn btn-ghost" onClick={loadStatus} disabled={statusLoading}>
+              {statusLoading ? "刷新中..." : "⟳ 刷新"}
+            </button>
+          </div>
+
+          {unitStatus.length === 0 && !statusLoading && (
+            <div style={{ textAlign: "center", padding: "48px 24px", color: "var(--muted)" }}>
+              <div style={{ fontSize: 15, marginBottom: 8 }}>暂无 Koan Unit</div>
+              <div style={{ fontSize: 13 }}>请先在「Koan Unit」Tab 添加 Unit</div>
+            </div>
+          )}
+
+          {statusLoading && unitStatus.length === 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "32px 0", justifyContent: "center", color: "var(--muted)" }}>
+              <span style={{ display: "inline-block", width: 18, height: 18, border: "2.5px solid var(--border)", borderTopColor: "var(--accent)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+              <span style={{ fontSize: 13 }}>正在查询各 Unit 状态…</span>
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {unitStatus.map(unit => {
+              const actColor = unit.activity === "busy" ? "var(--warn)" : unit.activity === "idle" ? "var(--ok)" : "var(--muted)";
+              const actLabel = unit.activity === "busy" ? "🔥 忙碌" : unit.activity === "idle" ? "😴 空闲" : "❓ 未知";
+              const dispatches = Array.isArray(unit.dispatches) ? unit.dispatches : [];
+              const unitChannels = Array.isArray(unit.channels) ? unit.channels : [];
+              const pending = dispatches.filter(d => d.status === "pending");
+              const accepted = dispatches.filter(d => d.status === "accepted");
+              const completed = dispatches.filter(d => d.status === "completed");
+
+              return (
+                <div key={unit.koanId} style={{
+                  background: "rgba(17,24,34,0.7)", border: "1px solid var(--border)", borderRadius: 12,
+                  padding: 16, display: "flex", flexDirection: "column", gap: 12,
+                }}>
+                  {/* Unit header */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 20 }}>{unit.source === "local" ? "🖥️" : "🌐"}</span>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>{unit.label}</div>
+                        <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "var(--muted)" }}>{unit.koanId}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: actColor }}>{actLabel}</span>
+                      <span style={{
+                        fontSize: 10, padding: "2px 8px", borderRadius: 10,
+                        background: unit.source === "local" ? "rgba(115,252,214,0.12)" : "rgba(216,79,169,0.12)",
+                        color: unit.source === "local" ? "var(--ok)" : "#d84fa9",
+                      }}>
+                        {unit.source === "local" ? "本地" : "外部"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Stats row */}
+                  <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ color: "var(--muted)" }}>频道:</span>
+                      <span style={{ fontWeight: 600 }}>{unitChannels.length}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ color: "var(--warn)" }}>⏳ 待处理:</span>
+                      <span style={{ fontWeight: 600 }}>{pending.length}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ color: "var(--info)" }}>🔄 进行中:</span>
+                      <span style={{ fontWeight: 600 }}>{accepted.length}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ color: "var(--ok)" }}>✅ 完成:</span>
+                      <span style={{ fontWeight: 600 }}>{completed.length}</span>
+                    </div>
+                  </div>
+
+                  {/* Active tasks */}
+                  {(pending.length > 0 || accepted.length > 0) && (
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: "var(--ink)" }}>当前任务</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {[...accepted, ...pending].slice(0, 6).map((d, i) => (
+                          <div key={d.dispatchId || i} style={{
+                            padding: "6px 10px", borderRadius: 8, fontSize: 11,
+                            background: d.status === "accepted" ? "rgba(52,152,219,0.1)" : "rgba(209,137,45,0.08)",
+                            border: `1px solid ${d.status === "accepted" ? "rgba(52,152,219,0.3)" : "rgba(209,137,45,0.2)"}`,
+                            maxWidth: 260,
+                          }}>
+                            <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {d.status === "accepted" ? "🔄" : "⏳"} {d.payload?.title || d.title || "无标题"}
+                            </div>
+                            {d.assigneeId && <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>→ {d.assigneeId}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Channels list */}
+                  {unitChannels.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6, color: "var(--ink)" }}>所在频道</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {unitChannels.slice(0, 8).map((ch, i) => (
+                          <span key={ch.channelId || i} style={{
+                            padding: "3px 10px", borderRadius: 16, fontSize: 11,
+                            background: "var(--panel)", border: "1px solid var(--border)",
+                          }}>
+                            #{ch.name || ch.channelId}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No data */}
+                  {dispatches.length === 0 && unitChannels.length === 0 && unit.source === "external" && (
+                    <div style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic" }}>
+                      外部 Unit 暂无可查询的详细数据
+                    </div>
+                  )}
+                  {dispatches.length === 0 && unitChannels.length === 0 && unit.source === "local" && (
+                    <div style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic" }}>
+                      暂无任务和频道活动
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CreateChannelForm({ koanAgents, onCreated }) {
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const [ownerGw, setOwnerGw] = useState(koanAgents[0]?.gwId || "");
+  const [busy, setBusy] = useState(false);
+
+  const namePattern = /^[a-z0-9][a-z0-9-]{0,38}[a-z0-9]$/;
+  const nameError = name && !namePattern.test(name)
+    ? "2-40 字符，仅小写字母、数字和连字符，不能以连字符开头或结尾"
+    : "";
+
+  const submit = async () => {
+    if (!name || !ownerGw) return toast("请填写频道名称并选择 Owner", "error");
+    if (nameError) return toast(nameError, "error");
+    setBusy(true);
+    try {
+      await api("POST", "/api/koan/channels", { gwId: ownerGw, name, description: desc, visibility: "public" });
+      toast(`频道 #${name} 创建成功`, "success");
+      onCreated();
+    } catch (e) { toast(e.message, "error"); }
+    setBusy(false);
+  };
+
+  return (
+    <div style={{ background: "var(--panel)", border: "1px solid var(--border)", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 12, alignItems: "end" }}>
+        <div>
+          <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 4 }}>频道名称</label>
+          <input value={name} onChange={e => setName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="dev-team"
+            style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: `1px solid ${nameError ? "var(--bad)" : "var(--border)"}`, fontSize: 13 }} />
+          {nameError && <div style={{ fontSize: 11, color: "var(--bad)", marginTop: 2 }}>{nameError}</div>}
+        </div>
+        <div>
+          <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 4 }}>描述</label>
+          <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="可选"
+            style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 13 }} />
+        </div>
+        <div>
+          <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 4 }}>Owner (Agent)</label>
+          <select value={ownerGw} onChange={e => setOwnerGw(e.target.value)}
+            style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 13 }}>
+            {koanAgents.map(a => <option key={a.gwId} value={a.gwId}>{a.displayName} ({a.koanId})</option>)}
+          </select>
+        </div>
+        <button className="btn btn-primary" disabled={busy} onClick={submit} style={{ fontSize: 13 }}>
+          {busy ? "创建中..." : "创建"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InviteForm({ channelId, koanAgents, koanUnits, existingMembers, onInvited }) {
+  const [selectedKoanId, setSelectedKoanId] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!selectedKoanId) return toast("请选择要添加的 Koan Unit", "error");
+    const signerGw = koanAgents[0]?.gwId;
+    if (!signerGw) return toast("没有可用的本地 Agent", "error");
+    setBusy(true);
+    try {
+      await api("POST", `/api/koan/channels/${channelId}/invite`, { gwId: signerGw, koanIds: [selectedKoanId] });
+      toast(`已将 ${selectedKoanId} 加入频道`, "success");
+      setSelectedKoanId("");
+      onInvited();
+    } catch (e) { toast(e.message, "error"); }
+    setBusy(false);
+  };
+
+  if (koanAgents.length === 0) return null;
+  const memberIds = new Set((existingMembers || []).map(m => m.koanId));
+  const available = (koanUnits || []).filter(u => !memberIds.has(u.koanId));
+
+  return (
+    <div style={{ background: "rgba(26,143,124,0.06)", borderRadius: 8, padding: 12, marginTop: 12 }}>
+      <strong style={{ fontSize: 13 }}>添加成员</strong>
+      {available.length === 0 ? (
+        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
+          所有 Koan Unit 已在频道中。可在「Koan Unit」Tab 添加更多 Unit。
+        </div>
+      ) : (
+        <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}>
+          <select value={selectedKoanId} onChange={e => setSelectedKoanId(e.target.value)}
+            style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 12 }}>
+            <option value="">选择 Koan Unit…</option>
+            {available.map(u => (
+              <option key={u.koanId} value={u.koanId}>
+                {u.source === "local" ? "🖥️" : "🌐"} {u.label} ({u.koanId})
+              </option>
+            ))}
+          </select>
+          <button className="btn btn-primary" disabled={busy || !selectedKoanId} onClick={submit} style={{ fontSize: 12, padding: "4px 12px" }}>
+            {busy ? "添加中..." : "添加"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DispatchForm({ koanAgents, channels, onDispatched }) {
+  const [channelId, setChannelId] = useState(channels[0]?.channelId || "");
+  const [assignee, setAssignee] = useState(koanAgents[0]?.koanId || "");
+  const [ownerGw, setOwnerGw] = useState(koanAgents[0]?.gwId || "");
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!title || !channelId || !assignee || !ownerGw) return toast("请填写完整", "error");
+    setBusy(true);
+    try {
+      await api("POST", `/api/koan/channels/${channelId}/dispatches`, {
+        gwId: ownerGw, assignee, title, description: desc, kind: "task",
+      });
+      toast("任务已派发", "success");
+      onDispatched();
+    } catch (e) { toast(e.message, "error"); }
+    setBusy(false);
+  };
+
+  return (
+    <div style={{ background: "var(--panel)", border: "1px solid var(--border)", borderRadius: 10, padding: 16, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div>
+          <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 4 }}>频道</label>
+          <select value={channelId} onChange={e => setChannelId(e.target.value)}
+            style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 13 }}>
+            {channels.map(c => <option key={c.channelId} value={c.channelId}>#{c.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 4 }}>指派给</label>
+          <select value={assignee} onChange={e => setAssignee(e.target.value)}
+            style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 13 }}>
+            {koanAgents.map(a => <option key={a.koanId} value={a.koanId}>{a.displayName} ({a.koanId})</option>)}
+          </select>
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div>
+          <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 4 }}>派发人 (Agent)</label>
+          <select value={ownerGw} onChange={e => setOwnerGw(e.target.value)}
+            style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 13 }}>
+            {koanAgents.map(a => <option key={a.gwId} value={a.gwId}>{a.displayName}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 4 }}>任务标题</label>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Build feature X"
+            style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 13 }} />
+        </div>
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 4 }}>描述</label>
+        <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={3} placeholder="任务详情..."
+          style={{ width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 13, resize: "vertical" }} />
+      </div>
+      <button className="btn btn-primary" disabled={busy} onClick={submit} style={{ fontSize: 13 }}>
+        {busy ? "派发中..." : "派发任务"}
+      </button>
+    </div>
+  );
+}
+
+function DispatchBoard({ channels, koanAgents }) {
+  const [allDispatches, setAllDispatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const results = await Promise.all(
+          channels.map(ch => api("GET", `/api/koan/channels/${ch.channelId}/dispatches`).catch(() => ({ dispatches: [] })))
+        );
+        if (!cancelled) {
+          const all = [];
+          results.forEach((r, i) => {
+            (r.dispatches || []).forEach(d => all.push({ ...d, channelName: channels[i].name }));
+          });
+          setAllDispatches(all);
+          setLoading(false);
+        }
+      } catch (e) { if (!cancelled) setLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [channels]);
+
+  if (loading) return <div style={{ color: "var(--muted)", padding: 20 }}>加载中...</div>;
+  if (allDispatches.length === 0) return <div style={{ color: "var(--muted)", padding: 20, textAlign: "center" }}>暂无任务</div>;
+
+  const statusGroups = { pending: [], accepted: [], completed: [], failed: [] };
+  allDispatches.forEach(d => {
+    const s = d.status || "pending";
+    if (statusGroups[s]) statusGroups[s].push(d);
+    else statusGroups.pending.push(d);
+  });
+
+  const statusLabels = { pending: "⏳ 待处理", accepted: "🔄 进行中", completed: "✅ 已完成", failed: "❌ 失败" };
+  const statusColors = { pending: "var(--warn)", accepted: "var(--info)", completed: "var(--ok)", failed: "var(--bad)" };
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 12 }}>
+      {Object.entries(statusGroups).map(([status, items]) => (
+        <div key={status}>
+          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 12, color: statusColors[status] }}>
+            {statusLabels[status]} ({items.length})
+          </div>
+          {items.map(d => (
+            <div key={d.dispatchId} style={{
+              background: "var(--panel)", border: "1px solid var(--border)", borderRadius: 8,
+              padding: 12, marginBottom: 8, fontSize: 12,
+            }}>
+              <div style={{ fontWeight: 600, marginBottom: 6 }}>{d.payload?.title || "无标题"}</div>
+              {d.payload?.description && (
+                <div style={{ color: "var(--ink-soft)", marginBottom: 6, fontSize: 11 }}>
+                  {d.payload.description.length > 80 ? d.payload.description.slice(0, 80) + "..." : d.payload.description}
+                </div>
+              )}
+              <div style={{ color: "var(--muted)", fontSize: 11 }}>
+                <div>指派: {d.assigneeId}</div>
+                <div>频道: #{d.channelName}</div>
+                <div>{new Date(d.createdAt).toLocaleString()}</div>
+              </div>
+            </div>
+          ))}
+          {items.length === 0 && <div style={{ color: "var(--muted)", fontSize: 12, padding: 12 }}>—</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const VIRTUAL_PAGE_IDS = new Set(["overview", "game", "llm", "materials", "personas", "koan"]);
 
 function App() {
   const [gateways, setGateways] = useState([]);
   const [selectedId, setSelectedId] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [activeKoanId, setActiveKoanId] = useState("");
+
+  const selectedIdRef = useRef(selectedId);
+  useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+
+  useEffect(() => {
+    api("GET", "/api/koan/agents").then(agents => {
+      if (agents && agents.length > 0) setActiveKoanId(agents[0].koanId || "");
+    }).catch(() => {});
+  }, []);
 
   const loadGateways = useCallback(async (showErrors = false) => {
     try {
       const data = await api("GET", "/api/gateways");
       setGateways(data);
       setLoading(false);
-      if (!VIRTUAL_PAGE_IDS.has(selectedId) && !data.find((gw) => gw.id === selectedId)) {
+      const cur = selectedIdRef.current;
+      if (!VIRTUAL_PAGE_IDS.has(cur) && !data.find((gw) => gw.id === cur)) {
         setSelectedId("overview");
       }
     } catch (err) {
       if (showErrors) toast(err.message, "error");
       setLoading(false);
     }
-  }, [selectedId]);
+  }, []);
 
   useEffect(() => {
     loadGateways(true);
@@ -5154,21 +6036,18 @@ function App() {
       )}
       <header className="header">
         <div className="header-brand">
-          <div className="header-logo">HC</div>
+          <div className="header-logo">AM</div>
           <div>
-            <div className="header-title">OpenClaw Hub Manager</div>
-            <div className="header-sub">Gateway 集群监控 · 日志 · 配置管理</div>
+            <div className="header-title">Agent Mesh</div>
+            <div className="header-sub">Local Agents · Koan Network · Worldwide</div>
           </div>
         </div>
-        <div className="header-meta">
-          <div className="meta-pill">状态: <strong>{gateways.filter((g) => g.status === "running").length} 运行</strong></div>
-          <div className="meta-pill">端口: <strong>61000</strong></div>
-        </div>
-        <div className="header-actions">
-          <button className="btn btn-primary" onClick={() => setShowAdd(true)}>＋ 新增 Gateway</button>
-          <button className="btn btn-ghost" onClick={startAll}>▶ 全部启动</button>
-          <button className="btn btn-ghost" onClick={stopAll}>⏹ 全部停止</button>
-          <button className="btn btn-ghost" onClick={loadGateways}>⟳ 刷新</button>
+        <div className="header-meta" style={{ marginLeft: "auto" }}>
+          <div className="meta-pill">本地运行: <strong>{gateways.filter((g) => g.status === "running").length}/{gateways.filter(g => g.role !== "herald").length}</strong></div>
+          <div className="meta-pill" style={{ borderColor: activeKoanId ? "rgba(216,79,169,0.3)" : undefined, background: activeKoanId ? "rgba(216,79,169,0.08)" : undefined }}>
+            <span style={{ fontSize: 10, opacity: 0.7 }}>Koan:</span>
+            <strong style={{ color: activeKoanId ? "#d84fa9" : "var(--muted)" }}>{activeKoanId || "未连接"}</strong>
+          </div>
         </div>
       </header>
       <div className="layout">
@@ -5177,7 +6056,8 @@ function App() {
           {loading ? (
             <div className="loading">加载中...</div>
           ) : selectedId === "overview" ? (
-            <OverviewPanel gateways={gateways} onSelect={setSelectedId} onRefresh={loadGateways} />
+            <OverviewPanel gateways={gateways} onSelect={setSelectedId} onRefresh={loadGateways}
+              onShowAdd={() => setShowAdd(true)} onStartAll={startAll} onStopAll={stopAll} />
           ) : selectedId === "game" ? (
             <ArenaPanel />
           ) : selectedId === "materials" ? (
@@ -5186,6 +6066,8 @@ function App() {
             <PersonaLibraryPanel gateways={gateways} />
           ) : selectedId === "llm" ? (
             <LLMPanel gateways={gateways} />
+          ) : selectedId === "koan" ? (
+            <KoanMeshPanel gateways={gateways} />
           ) : selectedGateway ? (
             <GatewayDetail gateway={selectedGateway} onRefresh={loadGateways} onDelete={loadGateways} />
           ) : (

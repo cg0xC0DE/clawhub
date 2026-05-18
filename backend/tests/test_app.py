@@ -566,10 +566,10 @@ class TestCheckModelUpdates:
                     "models": [{"id": "gpt-5.4", "label": "GPT-5.4"}],
                 },
                 {
-                    "id": "anthropic",
-                    "label": "Anthropic",
+                    "id": "minimax",
+                    "label": "MiniMax",
                     "api_key": "",
-                    "models": [{"id": "claude-opus-4-6", "label": "Claude Opus 4.6"}],
+                    "models": [{"id": "MiniMax-M2.5", "label": "MiniMax M2.5"}],
                 },
             ],
         }
@@ -598,15 +598,15 @@ class TestCheckModelUpdates:
             assert "new" in u
             assert "removable" in u
 
-    def test_known_latest_for_anthropic(self, client, tmp_hub):
+    def test_known_latest_for_minimax(self, client, tmp_hub):
         self._seed_profiles(client, tmp_hub)
         resp = client.post("/api/llm-profiles/check-updates")
         updates = resp.get_json()["updates"]
-        anthropic = next(u for u in updates if u["provider_id"] == "anthropic")
-        assert anthropic["source"] == "known"
-        discovered_ids = {m["id"] for m in anthropic["discovered"]}
-        assert "claude-opus-4-6" in discovered_ids
-        assert "claude-sonnet-4-6" in discovered_ids
+        minimax = next(u for u in updates if u["provider_id"] == "minimax")
+        assert minimax["source"] == "known"
+        discovered_ids = {m["id"] for m in minimax["discovered"]}
+        assert "MiniMax-M2.7" in discovered_ids
+        assert "MiniMax-M2.5" in discovered_ids
 
     def test_openai_without_key_uses_no_discovery(self, client, tmp_hub):
         self._seed_profiles(client, tmp_hub)
@@ -1264,7 +1264,7 @@ class TestSecretaryHistory:
     def test_get_detail(self, client, tmp_hub):
         import app as flask_app
         entry = flask_app._save_secretary_summary(
-            topic="议题A", prompt="提示词A", model="claude-sonnet-4", result="详细总结内容ABC"
+            topic="议题A", prompt="提示词A", model="gpt-5.4", result="详细总结内容ABC"
         )
         resp = client.get(f"/api/arena/secretary/history/{entry['id']}")
         assert resp.status_code == 200

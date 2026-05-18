@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for ClawHub backend tests."""
+"""Shared pytest fixtures for Agent Mesh backend tests."""
 
 import json
 import sys
@@ -70,7 +70,7 @@ def tmp_hub(tmp_path):
             "groupId": "-100999",
             "groupName": "测试群",
         },
-        "proxy": "http://127.0.0.1:10020",
+        "proxy": "",
         "sync": {
             "enabled": True,
             "intervalSeconds": 30,

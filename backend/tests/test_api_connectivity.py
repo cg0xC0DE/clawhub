@@ -22,12 +22,13 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import generate_persona as gp
+from proxy_config import get_proxy
 
 # ── Reachability helper ───────────────────────────────────────
 
 # Timeout for TCP probe (seconds) — keep short
 _TCP_TIMEOUT = 5
-_PROXY = gp.PROXY  # http://127.0.0.1:10020
+_PROXY = get_proxy()
 
 
 def _tcp_reachable(host: str, port: int = 443) -> bool:
@@ -41,9 +42,12 @@ def _tcp_reachable(host: str, port: int = 443) -> bool:
 
 def _proxy_available() -> bool:
     """Check if the local proxy is running."""
-    parsed = urlparse(_PROXY)
+    proxy_url = get_proxy()
+    if not proxy_url:
+        return False
+    parsed = urlparse(proxy_url)
     host = parsed.hostname or "127.0.0.1"
-    port = parsed.port or 10020
+    port = parsed.port or 1080
     return _tcp_reachable(host, port)
 
 
@@ -84,11 +88,6 @@ _PROVIDERS = {
         "host": "api.openai.com",
         "url": "https://api.openai.com/v1/chat/completions",
         "needs_proxy": True,  # usually blocked in China
-    },
-    "anthropic": {
-        "host": "api.anthropic.com",
-        "url": "https://api.anthropic.com/v1/messages",
-        "needs_proxy": True,
     },
     "google": {
         "host": "generativelanguage.googleapis.com",
@@ -152,11 +151,6 @@ class TestTcpReachability:
             pytest.skip("api.openai.com unreachable (VPN/proxy needed?)")
         assert reachability["openai"] is True
 
-    def test_anthropic_reachable(self, reachability):
-        if not reachability.get("anthropic"):
-            pytest.skip("api.anthropic.com unreachable (VPN/proxy needed?)")
-        assert reachability["anthropic"] is True
-
     def test_google_reachable(self, reachability):
         if not reachability.get("google"):
             pytest.skip("generativelanguage.googleapis.com unreachable")
@@ -209,14 +203,15 @@ class TestApiSmoke:
         assert len(result) > 0, "GPT-5.4 returned empty response"
         print(f"  gpt-5.4 response: {result!r}")
 
-    def test_anthropic_sonnet(self, reachability, api_keys):
-        self._skip_unless_ready("anthropic", reachability, api_keys)
-        result = gp._call_anthropic(
-            api_keys["anthropic"], "claude-sonnet-4-20250514", "Say OK",
+    def test_minimax_m25(self, reachability, api_keys):
+        self._skip_unless_ready("minimax", reachability, api_keys)
+        result = gp._call_openai_compatible(
+            api_keys["minimax"], "MiniMax-M2.5-highspeed", "Say OK",
+            "https://api.minimax.io/v1/chat/completions",
             max_tokens=5,
         )
-        assert len(result) > 0, "Claude Sonnet returned empty response"
-        print(f"  claude-sonnet-4 response: {result!r}")
+        assert len(result) > 0, "MiniMax M2.5 returned empty response"
+        print(f"  minimax-m2.5 response: {result!r}")
 
     def test_google_gemini_flash(self, reachability, api_keys):
         self._skip_unless_ready("google", reachability, api_keys)
@@ -229,8 +224,8 @@ class TestApiSmoke:
 
     def test_kimi_k25(self, reachability, api_keys):
         self._skip_unless_ready("kimi-coding", reachability, api_keys)
-        # Kimi Coding uses Anthropic protocol at api.kimi.com
-        result = gp._call_anthropic(
+        # Kimi Coding uses Messages protocol at api.kimi.com
+        result = gp._call_messages_api(
             api_keys["kimi-coding"], "k2p5", "Say OK",
             max_tokens=5,
             base_url="https://api.kimi.com/coding/v1/messages",

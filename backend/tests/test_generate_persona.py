@@ -119,9 +119,9 @@ class TestCallLlmRouting:
             gp._call_llm("test", model="gpt-5.4")
 
     @patch.object(gp, "_get_api_key", return_value="sk-test")
-    @patch.object(gp, "_call_anthropic", return_value="response")
-    def test_anthropic_routing(self, mock_call, mock_key):
-        result = gp._call_llm("test", model="claude-sonnet-4.6")
+    @patch.object(gp, "_call_openai_compatible", return_value="response")
+    def test_minimax_routing(self, mock_call, mock_key):
+        result = gp._call_llm("test", model="minimax-m2.5")
         mock_call.assert_called_once()
         assert result == "response"
 
@@ -140,11 +140,11 @@ class TestCallLlmRouting:
         assert result == "response"
 
     @patch.object(gp, "_get_api_key", return_value="sk-test")
-    @patch.object(gp, "_call_anthropic", return_value="response")
+    @patch.object(gp, "_call_messages_api", return_value="response")
     def test_kimi_routing(self, mock_call, mock_key):
         result = gp._call_llm("test", model="kimi-k2.5")
         mock_call.assert_called_once()
-        # Kimi Coding uses Anthropic protocol at api.kimi.com
+        # Kimi Coding uses Messages protocol at api.kimi.com
         assert "kimi.com" in mock_call.call_args.kwargs.get("base_url", "")
 
 
@@ -256,7 +256,10 @@ class TestMakeOpener:
         for h in opener.handlers:
             if isinstance(h, urllib.request.ProxyHandler):
                 proxies = getattr(h, "proxies", {})
-                assert gp.PROXY not in proxies.values()
+                from proxy_config import get_proxy
+                proxy_url = get_proxy()
+                if proxy_url:
+                    assert proxy_url not in proxies.values()
                 break
 
 

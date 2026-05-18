@@ -330,9 +330,9 @@ class TestProvisionGateway:
         with patch.object(gm, "GATEWAYS_DIR", tmp_hub / "gateways"), \
              patch.object(gm, "_copy_auth_profiles"):
             cfg_path = gm.provision_gateway("bot_model", "角色", "🐉", 62000,
-                                             primary_model="claude-sonnet-4")
+                                             primary_model="minimax/MiniMax-M2.5")
         cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
-        assert cfg["agents"]["defaults"]["model"]["primary"] == "claude-sonnet-4"
+        assert cfg["agents"]["defaults"]["model"]["primary"] == "minimax/MiniMax-M2.5"
 
     def test_generates_unique_token(self, tmp_hub):
         with patch.object(gm, "GATEWAYS_DIR", tmp_hub / "gateways"), \

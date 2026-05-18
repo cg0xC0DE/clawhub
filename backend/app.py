@@ -4,6 +4,9 @@ from gateway_manager import GatewayManager, HUB_DIR, GATEWAYS_DIR, provision_gat
 from group_sync import start_sync, stop_sync, sync_once, _load_palace
 from eunuch import start_eunuch, stop_eunuch, query_ext_message, submit_actions as eunuch_submit, ledger_all, get_pool as eunuch_get_pool, collect_once as eunuch_collect_once
 from compact_session import compact_gateway_sessions
+from proxy_config import get_proxy, get_proxy_env
+import koan_client as koan
+import koan_store
 import os
 import json
 import threading
@@ -1429,34 +1432,40 @@ def _get_openclaw_supported_models(force: bool = False) -> set:
             print(f"[openclaw-models] list failed: {(r.stderr or '')[:200]}")
             return _openclaw_models_cache.get("models", set())
 
-        # Parse JSON output — expected: array of model objects or similar
+        # Parse JSON output — handle multiple CLI output formats
         raw = (r.stdout or "").strip()
         models_set = set()
 
-        def _clean(s: str) -> str:
+        def _clean_model_id(s: str) -> str:
+            """Strip JSON artifacts (quotes, commas, whitespace) from a model id."""
             return s.strip().strip('"').strip("'").rstrip(",").strip()
 
-        def _add(prov: str, mid: str):
-            prov, mid = _clean(prov), _clean(mid)
+        def _add_model(prov: str, mid: str):
+            prov = _clean_model_id(prov)
+            mid = _clean_model_id(mid)
             if prov and mid:
                 models_set.add(f"{prov}/{mid}".lower())
             elif mid and "/" in mid:
                 models_set.add(mid.lower())
 
-        def _extract_list(prov: str, items):
+        def _extract_models_from_list(prov: str, items):
+            """Extract model ids from a list (strings or dicts)."""
             for m in items:
                 if isinstance(m, str):
-                    _add(prov, m)
+                    _add_model(prov, m)
                 elif isinstance(m, dict):
-                    _add(prov, m.get("id") or m.get("model") or m.get("name") or "")
+                    mid = m.get("id") or m.get("model") or m.get("name") or ""
+                    if mid:
+                        _add_model(prov, mid)
 
-        # Try to locate first JSON object/array (skip non-JSON preamble)
+        # Try to find first JSON object/array in output (skip non-JSON preamble)
         json_data = None
-        for ch in ("{", "["):
-            idx = raw.find(ch)
+        for start_char in ("{", "["):
+            idx = raw.find(start_char)
             if idx >= 0:
                 try:
-                    json_data = json.loads(raw[idx:])
+                    candidate = raw[idx:]
+                    json_data = json.loads(candidate)
                     break
                 except json.JSONDecodeError:
                     continue
@@ -1466,38 +1475,43 @@ def _get_openclaw_supported_models(force: bool = False) -> set:
             if isinstance(data, list):
                 for entry in data:
                     if isinstance(entry, str):
-                        clean = _clean(entry)
+                        # "provider/model" strings
+                        clean = _clean_model_id(entry)
                         if "/" in clean:
                             models_set.add(clean.lower())
                         elif clean:
                             models_set.add(f"unknown/{clean}".lower())
                     elif isinstance(entry, dict):
+                        # {"id": ..., "provider": ...} or {"KEY": "PROVIDER", "models": [...]}
                         mid = entry.get("id") or entry.get("model") or entry.get("name") or ""
                         prov = entry.get("provider") or entry.get("KEY") or entry.get("key") or ""
                         mlist = entry.get("models") or entry.get("items") or []
                         if mlist and prov:
-                            _extract_list(_clean(prov), mlist)
+                            _extract_models_from_list(_clean_model_id(prov), mlist)
                         elif mid and prov:
-                            _add(prov, mid)
+                            _add_model(prov, mid)
                         elif mid:
-                            clean = _clean(mid)
+                            clean = _clean_model_id(mid)
                             if "/" in clean:
                                 models_set.add(clean.lower())
             elif isinstance(data, dict):
                 for prov_id, prov_data in data.items():
-                    prov_id = _clean(prov_id)
+                    prov_id = _clean_model_id(prov_id)
                     if isinstance(prov_data, list):
-                        # {"PROVIDER": ["model1", "model2", ...]}
-                        _extract_list(prov_id, prov_data)
+                        # {"PROVIDER": ["model1", "model2"]} — most common alternate format
+                        _extract_models_from_list(prov_id, prov_data)
                     elif isinstance(prov_data, dict):
+                        # {"provider": {"models": [...]}} format
                         mlist = prov_data.get("models") or prov_data.get("items") or []
                         if mlist:
-                            _extract_list(prov_id, mlist)
+                            _extract_models_from_list(prov_id, mlist)
                         else:
+                            # Single model entry: {"provider": {"id": "model1"}}
                             mid = prov_data.get("id") or prov_data.get("model") or ""
                             if mid:
-                                _add(prov_id, mid)
+                                _add_model(prov_id, mid)
                     elif isinstance(prov_data, str):
+                        # {"provider/model": "some_value"} — keys are model refs
                         if "/" in prov_id:
                             models_set.add(prov_id.lower())
         else:
@@ -1506,7 +1520,7 @@ def _get_openclaw_supported_models(force: bool = False) -> set:
                 line = line.strip()
                 if not line or line.startswith("#"):
                     continue
-                clean = _clean(line)
+                clean = _clean_model_id(line)
                 if "/" in clean and not clean.startswith("{") and not clean.startswith("["):
                     models_set.add(clean.lower())
 
@@ -1642,15 +1656,14 @@ def _probe_google_models(api_key: str) -> list:
 
 # Known latest models for providers without discovery APIs
 _KNOWN_LATEST = {
-    "anthropic": [
-        {"id": "claude-opus-4-6", "label": "Claude Opus 4.6"},
-        {"id": "claude-sonnet-4-6", "label": "Claude Sonnet 4.6"},
-    ],
     "kimi-coding": [
         {"id": "k2p5", "label": "Kimi K2.5"},
     ],
     "minimax": [
+        {"id": "MiniMax-M2.7", "label": "MiniMax M2.7"},
+        {"id": "MiniMax-M2.7-highspeed", "label": "MiniMax M2.7 Highspeed"},
         {"id": "MiniMax-M2.5", "label": "MiniMax M2.5"},
+        {"id": "MiniMax-M2.5-highspeed", "label": "MiniMax M2.5 Highspeed"},
     ],
 }
 
@@ -1660,7 +1673,7 @@ def check_model_updates():
     """Probe each provider for latest models, compare with current config."""
     profiles = _read_llm_profiles()
     providers = profiles.get("providers", [])
-    proxy = "http://127.0.0.1:10020"
+    proxy = get_proxy()
 
     results = []
     for prov in providers:
@@ -1773,12 +1786,9 @@ def exec_command(gw_id):
     cfg_path = HUB_DIR / gw.config_file
     state_dir = HUB_DIR / gw.state_dir
 
-    env = os.environ.copy()
+    env = get_proxy_env()
     env["OPENCLAW_CONFIG_PATH"] = str(cfg_path)
     env["OPENCLAW_STATE_DIR"] = str(state_dir)
-    env["HTTP_PROXY"] = "http://127.0.0.1:10020"
-    env["HTTPS_PROXY"] = "http://127.0.0.1:10020"
-    env["ALL_PROXY"] = "socks5://127.0.0.1:10020"
 
     # Prefix with "openclaw" if user didn't
     if not cmd_str.startswith("openclaw"):
@@ -2046,12 +2056,9 @@ def _trigger_gateway_heartbeat(gw, message: str, timeout: int = 180):
 
     cfg_path = HUB_DIR / gw.config_file
     state_dir = HUB_DIR / gw.state_dir
-    env = os.environ.copy()
+    env = get_proxy_env()
     env["OPENCLAW_CONFIG_PATH"] = str(cfg_path)
     env["OPENCLAW_STATE_DIR"] = str(state_dir)
-    env["HTTP_PROXY"] = "http://127.0.0.1:10020"
-    env["HTTPS_PROXY"] = "http://127.0.0.1:10020"
-    env["ALL_PROXY"] = "socks5://127.0.0.1:10020"
     # Sanitize message for Windows shell: newlines and quotes break cmd.exe
     msg_safe = message.replace('\r', ' ').replace('\n', ' ').replace('"', '\\"')
 
@@ -3976,6 +3983,415 @@ def reset_all_gateway_sessions():
     total_sessions = sum(r.get("sessions_reset", 0) for r in results)
     print(f"[reset] 全局心流重置：{len(results)} 个 gateway，重建 {total_sessions} 个 session")
     return jsonify({"results": results, "total_sessions_reset": total_sessions})
+
+
+# ═══════════════════════════════════════════════════════════════
+# Koan Mesh — identity, channels, dispatches
+# ═══════════════════════════════════════════════════════════════
+
+def _koan_proxy() -> str | None:
+    """Return HTTP proxy for koanmesh.com calls (reuse Telegram proxy)."""
+    return os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY") or None
+
+
+@app.route("/api/koan/agents", methods=["GET"])
+def koan_list_agents():
+    """List all gateways that have a Koan identity (local summary)."""
+    agents = koan_store.list_identities(HUB_DIR)
+    return jsonify(agents)
+
+
+@app.route("/api/koan/agents/<gw_id>/register", methods=["POST"])
+def koan_register_agent(gw_id):
+    """Generate a Koan identity for a gateway and register it on koanmesh.com."""
+    gw = manager.gateways.get(gw_id)
+    if not gw:
+        return jsonify({"error": "Gateway not found"}), 404
+
+    existing = koan_store.load_identity(HUB_DIR, gw_id)
+    if existing:
+        return jsonify({"error": "Already registered", "koanId": existing.get("koanId")}), 409
+
+    body = request.get_json(silent=True) or {}
+    display_name = body.get("displayName") or gw.name or gw_id
+    bio = body.get("bio", "")
+    agent_name = display_name.lower().replace(" ", "-")
+
+    try:
+        identity = koan.generate_identity(agent_name)
+        persona = {"displayName": display_name, "bio": bio}
+
+        result = koan.KoanClient.register(
+            identity, persona,
+            proxy=_koan_proxy(),
+        )
+
+        assigned_id = result.get("koanId") or result.get("agent", {}).get("koanId")
+        if assigned_id:
+            identity["koanId"] = assigned_id
+
+        identity["persona"] = persona
+        identity["registeredAt"] = result.get("registeredAt") or \
+            __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat()
+
+        koan_store.save_identity(HUB_DIR, gw_id, identity)
+
+        return jsonify({
+            "koanId": identity["koanId"],
+            "displayName": display_name,
+            "registeredAt": identity["registeredAt"],
+            "serverResponse": result,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/koan/agents/<gw_id>/identity", methods=["GET"])
+def koan_get_identity(gw_id):
+    """Get a gateway's Koan identity (public fields only)."""
+    identity = koan_store.load_identity(HUB_DIR, gw_id)
+    if not identity:
+        return jsonify({"error": "No Koan identity for this gateway"}), 404
+    safe = {
+        "koanId": identity.get("koanId"),
+        "signingPublicKey": identity.get("signingPublicKey"),
+        "encryptionPublicKey": identity.get("encryptionPublicKey"),
+        "persona": identity.get("persona"),
+        "registeredAt": identity.get("registeredAt"),
+    }
+    return jsonify(safe)
+
+
+@app.route("/api/koan/agents/<gw_id>/identity", methods=["DELETE"])
+def koan_delete_identity(gw_id):
+    """Permanently delete a gateway's Koan identity (remote + local)."""
+    client, err = _get_koan_client(gw_id)
+    if err:
+        return err
+
+    # Try remote deregister first
+    remote_ok = False
+    remote_error = None
+    try:
+        client.deregister()
+        remote_ok = True
+    except Exception as e:
+        remote_error = str(e)
+        print(f"[koan] Remote deregister failed for {gw_id}: {remote_error}")
+
+    # Always delete local regardless
+    deleted = koan_store.delete_identity(HUB_DIR, gw_id)
+    if not deleted and not remote_ok:
+        return jsonify({"error": f"Local identity not found, remote also failed: {remote_error}"}), 404
+
+    return jsonify({"ok": True, "remote_deregistered": remote_ok,
+                    "remote_error": remote_error})
+
+
+@app.route("/api/koan/units", methods=["GET"])
+def koan_list_units():
+    """List all koan units (local gateway-linked + external manual)."""
+    return jsonify(koan_store.list_all_units(HUB_DIR))
+
+
+@app.route("/api/koan/units/external", methods=["POST"])
+def koan_add_external_unit():
+    """Add an external koan ID for tracking."""
+    body = request.get_json(force=True)
+    koan_id = (body.get("koanId") or "").strip()
+    if not koan_id:
+        return jsonify({"error": "koanId is required"}), 400
+    label = (body.get("label") or "").strip()
+    entry = koan_store.add_external_unit(HUB_DIR, koan_id, label)
+    return jsonify(entry)
+
+
+@app.route("/api/koan/units/external/<path:koan_id>", methods=["DELETE"])
+def koan_remove_external_unit(koan_id):
+    """Remove a manually-added external koan ID."""
+    if not koan_store.remove_external_unit(HUB_DIR, koan_id):
+        return jsonify({"error": "Not found"}), 404
+    return jsonify({"ok": True})
+
+
+@app.route("/api/koan/units/status", methods=["GET"])
+def koan_units_status():
+    """Get live activity status for all tracked koan units."""
+    units = koan_store.list_all_units(HUB_DIR)
+    results = []
+    for unit in units:
+        entry = {**unit, "dispatches": [], "channels": [], "activity": "unknown"}
+        # For local units we can query via their signing key
+        if unit["source"] == "local" and unit.get("gwId"):
+            client, err = _get_koan_client(unit["gwId"])
+            if not err:
+                try:
+                    d = client.my_dispatches(limit=20)
+                    dispatches = d.get("dispatches") or d if isinstance(d, list) else []
+                    if isinstance(dispatches, list):
+                        entry["dispatches"] = dispatches
+                except Exception:
+                    pass
+                try:
+                    ch = client.my_channels()
+                    entry["channels"] = ch.get("channels") or ch if isinstance(ch, list) else []
+                except Exception:
+                    pass
+        # Determine activity state
+        pending = [d for d in entry["dispatches"] if isinstance(d, dict) and d.get("status") in ("pending", "accepted")]
+        if pending:
+            entry["activity"] = "busy"
+        elif entry["dispatches"]:
+            entry["activity"] = "idle"
+        results.append(entry)
+    return jsonify(results)
+
+
+@app.route("/api/koan/directory", methods=["GET"])
+def koan_browse_directory():
+    """Browse the public koanmesh.com agent directory."""
+    page = request.args.get("page", 1, type=int)
+    try:
+        import requests as _req
+        proxies = {"http": _koan_proxy(), "https": _koan_proxy()} if _koan_proxy() else None
+        r = _req.get(f"{koan.KOAN_BASE_URL}/agents/browse",
+                     params={"page": page}, proxies=proxies, timeout=15)
+        r.raise_for_status()
+        return jsonify(r.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
+
+
+def _get_koan_client(gw_id: str):
+    """Load identity and build a KoanClient for a gateway. Returns (client, error_response)."""
+    identity = koan_store.load_identity(HUB_DIR, gw_id)
+    if not identity:
+        return None, (jsonify({"error": "No Koan identity for this gateway"}), 404)
+    client = koan.KoanClient(
+        koan_id=identity["koanId"],
+        signing_private_key_b64=identity["signingPrivateKey"],
+        proxy=_koan_proxy(),
+    )
+    return client, None
+
+
+# ── Channels ──────────────────────────────────────────────────
+
+@app.route("/api/koan/channels", methods=["GET"])
+def koan_list_channels():
+    """List channels. If ?gwId=X, list that agent's channels; otherwise list public."""
+    gw_id = request.args.get("gwId")
+    try:
+        if gw_id:
+            client, err = _get_koan_client(gw_id)
+            if err:
+                return err
+            return jsonify(client.my_channels())
+        else:
+            import requests as _req
+            proxies = {"http": _koan_proxy(), "https": _koan_proxy()} if _koan_proxy() else None
+            r = _req.get(f"{koan.KOAN_BASE_URL}/channels",
+                         params={"limit": 50}, proxies=proxies, timeout=15)
+            r.raise_for_status()
+            return jsonify(r.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
+
+
+@app.route("/api/koan/channels", methods=["POST"])
+def koan_create_channel():
+    """Create a new channel. Requires gwId (owner) in body."""
+    body = request.get_json(force=True)
+    gw_id = body.get("gwId")
+    if not gw_id:
+        return jsonify({"error": "gwId required"}), 400
+    client, err = _get_koan_client(gw_id)
+    if err:
+        return err
+    try:
+        result = client.create_channel(
+            name=body.get("name", ""),
+            description=body.get("description", ""),
+            visibility=body.get("visibility", "public"),
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/koan/channels/<channel_id>", methods=["GET"])
+def koan_get_channel(channel_id):
+    """Get channel detail (members, etc.)."""
+    try:
+        import requests as _req
+        proxies = {"http": _koan_proxy(), "https": _koan_proxy()} if _koan_proxy() else None
+        r = _req.get(f"{koan.KOAN_BASE_URL}/channels/{channel_id}",
+                     proxies=proxies, timeout=15)
+        r.raise_for_status()
+        return jsonify(r.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
+
+
+@app.route("/api/koan/channels/<channel_id>", methods=["DELETE"])
+def koan_delete_channel(channel_id):
+    """Delete a channel. Query param ?gwId=X identifies the owner agent."""
+    gw_id = request.args.get("gwId")
+    if not gw_id:
+        return jsonify({"error": "gwId required"}), 400
+    client, err = _get_koan_client(gw_id)
+    if err:
+        return err
+    try:
+        result = client.delete_channel(channel_id)
+        return jsonify(result or {"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/koan/channels/<channel_id>/invite", methods=["POST"])
+def koan_add_channel_members(channel_id):
+    """Add members to a channel. For local agents, auto-accepts via /join."""
+    body = request.get_json(force=True)
+    gw_id = body.get("gwId")
+    if not gw_id:
+        return jsonify({"error": "gwId required"}), 400
+    client, err = _get_koan_client(gw_id)
+    if err:
+        return err
+    koan_ids = body.get("koanIds", [])
+    try:
+        result = client.invite_to_channel(channel_id, koan_ids)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    # Auto-join for local agents whose signing keys we have
+    local_identities = koan_store.list_identities(HUB_DIR)
+    local_map = {ident["koanId"]: ident["gwId"] for ident in local_identities}
+    joined = []
+    for kid in koan_ids:
+        if kid in local_map:
+            try:
+                target_client, terr = _get_koan_client(local_map[kid])
+                if not terr:
+                    target_client._auth_request("POST", f"/channels/{channel_id}/join")
+                    joined.append(kid)
+            except Exception:
+                pass  # invite sent but auto-join failed
+    if joined:
+        result["auto_joined"] = joined
+    return jsonify(result)
+
+
+@app.route("/api/koan/channels/<channel_id>/accept-invite", methods=["POST"])
+def koan_accept_invite(channel_id):
+    """Accept a channel invitation. Body: {gwId}."""
+    body = request.get_json(force=True)
+    gw_id = body.get("gwId")
+    if not gw_id:
+        return jsonify({"error": "gwId required"}), 400
+    client, err = _get_koan_client(gw_id)
+    if err:
+        return err
+    try:
+        result = client.accept_invite(channel_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/koan/channels/<channel_id>/messages", methods=["GET"])
+def koan_channel_messages(channel_id):
+    """Get channel messages."""
+    limit = request.args.get("limit", 50, type=int)
+    try:
+        import requests as _req
+        proxies = {"http": _koan_proxy(), "https": _koan_proxy()} if _koan_proxy() else None
+        r = _req.get(f"{koan.KOAN_BASE_URL}/channels/{channel_id}/messages",
+                     params={"limit": limit}, proxies=proxies, timeout=15)
+        r.raise_for_status()
+        return jsonify(r.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
+
+
+# ── Dispatches ────────────────────────────────────────────────
+
+@app.route("/api/koan/channels/<channel_id>/dispatches", methods=["GET"])
+def koan_list_dispatches(channel_id):
+    """List dispatches in a channel."""
+    try:
+        import requests as _req
+        proxies = {"http": _koan_proxy(), "https": _koan_proxy()} if _koan_proxy() else None
+        params = {"limit": request.args.get("limit", 50, type=int)}
+        if request.args.get("status"):
+            params["status"] = request.args["status"]
+        if request.args.get("assignee"):
+            params["assignee"] = request.args["assignee"]
+        r = _req.get(f"{koan.KOAN_BASE_URL}/channels/{channel_id}/dispatches",
+                     params=params, proxies=proxies, timeout=15)
+        r.raise_for_status()
+        return jsonify(r.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
+
+
+@app.route("/api/koan/channels/<channel_id>/dispatches", methods=["POST"])
+def koan_create_dispatch(channel_id):
+    """Create a dispatch (assign work). Body: {gwId, assignee, title, description, kind?}."""
+    body = request.get_json(force=True)
+    gw_id = body.get("gwId")
+    if not gw_id:
+        return jsonify({"error": "gwId required"}), 400
+    client, err = _get_koan_client(gw_id)
+    if err:
+        return err
+    try:
+        result = client.dispatch(
+            channel_id,
+            assignee=body.get("assignee", ""),
+            title=body.get("title", ""),
+            description=body.get("description", ""),
+            kind=body.get("kind", "task"),
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/koan/channels/<channel_id>/dispatches/<dispatch_id>", methods=["PATCH"])
+def koan_update_dispatch(channel_id, dispatch_id):
+    """Update dispatch status. Body: {gwId, status, result?}."""
+    body = request.get_json(force=True)
+    gw_id = body.get("gwId")
+    if not gw_id:
+        return jsonify({"error": "gwId required"}), 400
+    client, err = _get_koan_client(gw_id)
+    if err:
+        return err
+    try:
+        result = client.update_dispatch(
+            channel_id, dispatch_id,
+            status=body.get("status", ""),
+            result=body.get("result"),
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/koan/agents/<gw_id>/dispatches", methods=["GET"])
+def koan_agent_dispatches(gw_id):
+    """Get all dispatches assigned to a specific agent."""
+    client, err = _get_koan_client(gw_id)
+    if err:
+        return err
+    try:
+        status = request.args.get("status")
+        result = client.my_dispatches(status=status)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
 
 
 if __name__ == "__main__":

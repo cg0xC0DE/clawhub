@@ -16,7 +16,8 @@
         "groupId": "YOUR_TELEGRAM_GROUP_ID",
         "groupName": "Arena 讨论群"
     },
-    "proxy": "http://127.0.0.1:10020",
+    "proxy": "",
+    "_proxy_hint": "Set proxy URL if needed, e.g. http://127.0.0.1:7890 — leave empty for direct connection",
     "sync": {
         "enabled": true,
         "intervalSeconds": 30,

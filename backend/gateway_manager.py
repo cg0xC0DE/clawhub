@@ -8,6 +8,8 @@ import socket
 from datetime import datetime
 from pathlib import Path
 
+from proxy_config import get_proxy, get_socks_proxy, get_proxy_env
+
 ANSI_ESCAPE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\[\?[0-9;]*[a-zA-Z]')
 GATEWAYS_FILE = Path(__file__).parent.parent / "gateways.json"
 HUB_DIR = Path(__file__).parent.parent
@@ -245,10 +247,15 @@ class GatewayProcess:
         env_block = (
             f'set "OPENCLAW_STATE_DIR={state_dir}" && '
             f'set "OPENCLAW_CONFIG_PATH={cfg_path}" && '
-            f'set "HTTP_PROXY=http://127.0.0.1:10020" && '
-            f'set "HTTPS_PROXY=http://127.0.0.1:10020" && '
-            f'set "ALL_PROXY=socks5://127.0.0.1:10020" && '
         )
+        http_proxy = get_proxy()
+        if http_proxy:
+            socks_proxy = get_socks_proxy()
+            env_block += (
+                f'set "HTTP_PROXY={http_proxy}" && '
+                f'set "HTTPS_PROXY={http_proxy}" && '
+                f'set "ALL_PROXY={socks_proxy}" && '
+            )
         return (
             f'cmd.exe /c {env_block}'
             f'"{node_exe}" "{openclaw_js}" gateway --port {self.port} --verbose'

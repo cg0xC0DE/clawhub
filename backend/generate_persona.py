@@ -15,6 +15,8 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
+from proxy_config import get_proxy, make_urllib_opener
+
 BACKEND_DIR = Path(__file__).resolve().parent
 GATEWAYS_DIR = BACKEND_DIR.parent / "gateways"
 
@@ -23,8 +25,6 @@ GATEWAYS_DIR = BACKEND_DIR.parent / "gateways"
 MODEL_REGISTRY = {
     "gpt-5.4":            {"provider": "openai",       "model_id": "gpt-5.4",                   "label": "GPT-5.4"},
     "gpt-5.4-pro":        {"provider": "openai",       "model_id": "gpt-5.4-pro",               "label": "GPT-5.4 Pro"},
-    "claude-opus-4.6":    {"provider": "anthropic",    "model_id": "claude-opus-4-6",           "label": "Claude Opus 4.6"},
-    "claude-sonnet-4.6":  {"provider": "anthropic",    "model_id": "claude-sonnet-4-6",         "label": "Claude Sonnet 4.6"},
     "gemini-3.1-pro":     {"provider": "google",       "model_id": "gemini-3.1-pro-preview",    "label": "Gemini 3.1 Pro"},
     "kimi-k2.5":          {"provider": "kimi-coding",  "model_id": "k2p5",                      "label": "Kimi K2.5"},
     "minimax-m2.5":       {"provider": "minimax",      "model_id": "MiniMax-M2.5",              "label": "MiniMax M2.5"},
@@ -33,14 +33,11 @@ MODEL_REGISTRY = {
 DEFAULT_MODEL = "gpt-5.4"
 
 _PROVIDER_URLS = {
-    "anthropic":   "https://api.anthropic.com/v1/messages",
     "openai":      "https://api.openai.com/v1/chat/completions",
     "google":      "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
     "kimi-coding": "https://api.kimi.com/coding/v1/messages",
     "minimax":     "https://api.minimax.io/v1/text/chatcompletion_v2",
 }
-
-PROXY = "http://127.0.0.1:10020"
 
 
 # ── Key finder ────────────────────────────────────────────
@@ -76,15 +73,14 @@ def get_available_models() -> list[dict]:
 # ── LLM call functions ────────────────────────────────────
 def _make_opener(use_proxy: bool = True):
     if use_proxy:
-        return urllib.request.build_opener(
-            urllib.request.ProxyHandler({"http": PROXY, "https": PROXY})
-        )
+        return make_urllib_opener()
     return urllib.request.build_opener()
 
 
-def _call_anthropic(api_key: str, model_id: str, prompt: str,
-                    max_tokens: int = 16384, base_url: str = "") -> str:
-    url = base_url or _PROVIDER_URLS["anthropic"]
+def _call_messages_api(api_key: str, model_id: str, prompt: str,
+                      max_tokens: int = 16384, base_url: str = "") -> str:
+    """Call an Anthropic Messages-protocol compatible API (used by kimi-coding)."""
+    url = base_url
     payload = {
         "model": model_id,
         "max_tokens": max_tokens,
@@ -104,7 +100,7 @@ def _call_anthropic(api_key: str, model_id: str, prompt: str,
             result = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         body = e.read().decode("utf-8", errors="replace")[:500]
-        raise RuntimeError(f"Anthropic API error {e.code} from {url}: {body}") from e
+        raise RuntimeError(f"Messages API error {e.code} from {url}: {body}") from e
     for block in result.get("content", []):
         if block.get("type") == "text":
             return block["text"].strip()
@@ -182,11 +178,9 @@ def _call_llm(prompt: str, model: str = DEFAULT_MODEL) -> str:
 
     print(f"[persona_gen] Using model={model} (provider={provider}, model_id={model_id})")
 
-    if provider == "anthropic":
-        return _call_anthropic(api_key, model_id, prompt)
-    elif provider == "kimi-coding":
-        # Kimi Coding uses Anthropic protocol at api.kimi.com
-        return _call_anthropic(api_key, model_id, prompt,
+    if provider == "kimi-coding":
+        # Kimi Coding uses Anthropic Messages protocol
+        return _call_messages_api(api_key, model_id, prompt,
                                base_url=_PROVIDER_URLS["kimi-coding"])
     elif provider == "google":
         return _call_google(api_key, model_id, prompt)

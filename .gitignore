@@ -49,3 +49,4 @@ backend/tools/simulate_*.py
 *.log
 backups/
 shared/
+favicon.png
